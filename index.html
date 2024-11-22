@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Shoonya Dashboard</title>
+  <script src="./js/axios.min.js"></script>
+  <script src="./config.js"></script>
+  <link rel="stylesheet" href="./style/index.css">
+</head>
+<body>
+  <div id="nav-bar">
+    <span id="user-id-text"></span>
+    <span id="nav-bar-total-cash">Loading...</span>
+    <span id="nav-bar-cash-balance"></span>
+    <span id="nav-bar-pl"></span>
+    <button id="logout-btn">Logout</button>
+  </div>
+  <div id="main-container">
+    <div id="depth-toolbar">
+      <span><label for="enable-checkbox">Enable Depth</label><input type="checkbox" id="enable-checkbox"></span>
+      <span><label for="enable-checkbox">Show/Hide</label><input type="checkbox" id="enable-show-hide"></span>
+      <span><button id="clear-button">Clear</button></span>
+      <span><button id="save-button" onclick="saveFile()">Download</button></span>
+      <span>
+        <button id="custom-file-upload-button" class="custom-file-upload">File</button>
+        <input type="file" id="file-input" accept=".json" style="display: none;">
+      </span>
+    </div>
+    <div id="table-list"></div>
+    <div id="search-container">
+      <div id="search-box">
+        <input type="text" id="search-input" placeholder="Search...">
+        <span id="search-icon">🔍</span>
+      </div>
+      <div id="search-result-container">
+        <span class="close-modal" id="close-modal"></span>
+        <ul id="results-list"></ul>
+      </div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="toggleSwitch">
+      <span class="slider round"></span>
+    </label>
+    <div id="details-list"></div>
+    <!-- <div class="position-container"> <h4>Stock Positions</h4> <div id="stock-positions" class="stock-positions"></div></div> -->
+    <div class="orders-list">
+      <div id="nifty-tag"></div>
+      <div id="orders-tag"></div>
+      <h5>Place order:</h5>
+      <div class="place-order-list" id="place-order-list">
+        <button id="blank-order-btn">Create Blank order</button>
+      </div>
+      <p id="msg">Success</p>
+      <div class="buy-order-list" id="buy-order-list">
+        <h5>Buy orders:</h5>
+      </div>
+      <div class="sell-order-list" id="sell-order-list">
+        <h5>Sell orders:</h5>
+      </div>
+      <div class="other-order-list" id="other-order-list">
+        <h5>Other orders:</h5>
+      </div>
+    </div>
+  </div>
+  <script src="./js/socket.js"></script>
+  <script src="./automation/analyze.js"></script>
+  <script src="./js/index.js"></script>
+</body>
+</html>
