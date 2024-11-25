@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      localStorage.removeItem("userToken");
+      localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -187,11 +187,11 @@ async function logout() {
     .then((data) => {
       if (data.stat === "Ok") {
         //have to uncomment later
-        //localStorage.removeItem("userToken");
+        localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       } else {
         alert("Session expires. Please login again.");
-        localStorage.removeItem("userToken");
+        localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       }
     })
@@ -345,7 +345,7 @@ function placeBlankOrder() {
             <input type="number" name="quantity" value="1" min="1">
           </label>
           <label>Price:
-            <input type="number" name="limitPrice" value="0.00" min="0" step="0.05">
+            <input type="number" name="limitPrice" value="0.00" min="0" step="0.01">
           </label>
           <label>Token:
           <input type="number" name="token" value="0">
@@ -459,7 +459,7 @@ function createPlaceOrderForm(data, orderType) {
           <label>Price:
             <input type="number" name="limitPrice" value="${curPrice.toFixed(
               1
-            )}" min="0" step="0.05">
+            )}" min="0" step="0.01">
           </label>
           <input type="hidden" name="token" value="${data["token"]}">
           <button type="submit">Submit Order</button>
@@ -598,7 +598,7 @@ function createModifiedPlaceOrderForm(jData) {
             <input type="number" name="quantity" value="${jData["qty"]}" min="1">
           </label>
           <label>Limit Price:
-            <input type="number" name="limitPrice" value="${jData["prc"]}" min="0" step="0.05">
+            <input type="number" name="limitPrice" value="${jData["prc"]}" min="0" step="0.01">
           </label>
           <input type="hidden" name="token" value="${jData["token"]}">
           <button type="submit">Submit Order</button>
@@ -842,7 +842,7 @@ function generateOrderDetails(order, id, count) {
     <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
     <label></label><span>${order.status}&nbsp;&nbsp;</span>
-    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
+    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
   `;
 
   if (id != "other-order-list") {
@@ -940,18 +940,30 @@ function getBalance() {
       value.cash
     ) {
       totalCash = parseFloat(value.cash);
-      cashAvailable = parseFloat(value.cash) - parseFloat(value.marginused);
+
+      if (value.marginused) {
+        document.getElementById("nav-bar-cash-balance").innerHTML =
+        "Used: " + "&#8377; " + parseFloat(value.marginused);
+        cashAvailable = parseFloat(value.cash) - parseFloat(value.marginused);
+      } else {
+        cashAvailable = totalCash;
+        document.getElementById("nav-bar-cash-balance").innerHTML =
+        "Used: " + "&#8377; " + 0;
+      }
+      
 
       document.getElementById("nav-bar-total-cash").innerHTML =
         "Cash: " + "&#8377; " + cashAvailable;
-      document.getElementById("nav-bar-cash-balance").innerHTML =
-        "Used: " + "&#8377; " + parseFloat(value.marginused);
-      if (parseFloat(value.rpnl) > 0) {
+      
+      if ( value.rpnl && parseFloat(value.rpnl) > 0) {
         document.getElementById("nav-bar-pl").style.color = "#f65454"
         document.getElementById("nav-bar-pl").innerHTML = "P/L: "+(0-parseFloat(value.rpnl));
-      } else {
+      } else if (value.rpnl && parseFloat(value.rpnl) < 0) {
         document.getElementById("nav-bar-pl").style.color = "#33e633"
         document.getElementById("nav-bar-pl").innerHTML = "P/L: +"+(0-parseFloat(value.rpnl));
+      } else {
+        document.getElementById("nav-bar-pl").style.color = "yellow"
+        document.getElementById("nav-bar-pl").innerHTML = "P/L: 0";
       }
       const balanceElemetInOrder = document.getElementById("cash-balance");
       if (balanceElemetInOrder) {

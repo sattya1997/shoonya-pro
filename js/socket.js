@@ -110,7 +110,7 @@ function updateOrderPos(data) {
   const curPrice = data.lp;
   const token = data.tk;
   const elements = document.querySelectorAll(`[data-pos-id="${token}"]`);
-  if (elements) {
+  if (elements && data.lp) {
     elements.forEach(element => {
       const posPrc = element.dataset.posPrc;
       const posQty = element.dataset.posQty;
@@ -118,13 +118,19 @@ function updateOrderPos(data) {
       const status = element.dataset.posStatus;
       const pos = parseFloat((curPrice * posQty) - (posPrc * posQty)).toFixed(2);
       
-      if ((type === "S" && status === "PENDING") || (type === "B" && status === "PENDING")) {
-        if (pos > 0) {
+      if ((type === "S" && status === "OPEN") || (type === "B" && status === "COMPLETE")) {
+        if (type === "B" && pos > 0) {
           element.innerText =  '+'+pos;
           element.style.color = 'green';
-        } else if (pos < 0) {
+        } else if (type === "B" && pos < 0) {
           element.innerText =  pos;
           element.style.color = 'red';
+        } else if (type === "S" && pos > 0){
+          element.innerText =  pos;
+          element.style.color = 'red';
+        } else if (type === "S" && pos < 0){
+          element.innerText =  pos;
+          element.style.color = 'green';
         } else {
           element.innerText =  pos;
           element.style.color = 'black';
@@ -205,9 +211,10 @@ function createNiftyDataField(data) {
     if (data.pc) {
       sym = data.pc > 0 ? "+" : "";
     }
-    document.getElementById("nifty-tag").innerHTML = `
-      Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}
-    `;
+
+    const niftyTag = document.getElementById("nifty-tag");
+    niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
+    niftyTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : "#d00505";
   }
 }
 
@@ -218,7 +225,7 @@ function createOrdersDataField(data) {
       sym = data.pc > 0 ? "+" : "";
     }
     const ordersTag = document.getElementById("orders-tag");
-    const orderTag = ordersTag.querySelector("#order-" + data.tk);
+    var orderTag = ordersTag.querySelector("#order-" + data.tk);
     if (orderTag) {
       orderTag.innerHTML = `
         ${orderNames[data.tk].split("-")[0]}: ${data.lp} (${sym}${data.pc}%)
@@ -228,9 +235,10 @@ function createOrdersDataField(data) {
       <div class="order-tag" id="order-${data.tk}">${
         orderNames[data.tk].split("-")[0]
       }: ${data.lp} (${sym}${data.pc}%)</div>
-
     `;
-    }
+    };
+    orderTag = ordersTag.querySelector("#order-" + data.tk);
+    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : parseFloat(data.pc) < 0 ? "#d00505" : "#8fa109";
   }
 
   if (isStoreDepth) {

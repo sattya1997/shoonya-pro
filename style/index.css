@@ -551,19 +551,24 @@ h5 {
 #nifty-tag,
 .order-tag {
   margin: 1px 0;
-  font-size: 11px;
+
   background-color: #211c1c;
   color: whitesmoke;
   font-weight: 600;
   border-radius: 2px;
-  padding: 1px;
+  padding: 3px;
+}
+
+#nifty-tag {
+  font-size: 13px;
 }
 
 #orders-tag {
+  font-size: 11px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  padding: 2px;
+  padding: 3px;
   width: 100%;
 }
 
