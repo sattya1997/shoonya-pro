@@ -783,7 +783,7 @@ function getOrders() {
       var otherOrderCount = 0;
 
       if (data && data.stat !== "Not_Ok") {
-        data.forEach((order) => {
+        data.reverse().forEach((order) => {
           if (
             order.stat === "Ok" &&
             order.trantype === "B" &&
@@ -791,6 +791,7 @@ function getOrders() {
             order.status != "CANCELED"
           ) {
             buyOrderCount++;
+            updateOrderDeatilsForPnL(order, "buy");
             generateOrderDetails(order, "buy-order-list", buyOrderCount);
             if (orderNames[order.token] != order.tsym) {
               orderNames[order.token] = order.tsym;
@@ -809,6 +810,7 @@ function getOrders() {
             order.status != "CANCELED"
           ) {
             sellOrderCount++;
+            updateOrderDeatilsForPnL(order, "sell");
             generateOrderDetails(order, "sell-order-list", sellOrderCount);
             if (orderNames[order.token] != order.tsym) {
               orderNames[order.token] = order.tsym;
@@ -832,11 +834,31 @@ function getOrders() {
     });
 }
 
+function updateOrderDeatilsForPnL(order, type) {
+  var result = orderDetailsForPnL.find(function(item) { return item.stock === order.token; });
+  if (!result && type === "buy") {
+    orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], sell:[], remaining: 0});
+  } else if (! result && type === "sell") {
+    orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], buy:[], remaining: 0});
+  } else if (result && type === "buy") {
+    result.buy.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc});
+    result.remaining = parseInt(result.remaining) + parseInt(order.qty);
+
+  } else if (result && type === "sell") {
+    result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc});
+    result.remaining = parseInt(result.remaining) + parseInt(order.qty);
+  }
+}
+
 function generateOrderDetails(order, id, count) {
   const list = document.getElementById(id);
   singleOrder = document.createElement("div");
   singleOrder.classList.add("single-order-list");
-  singleOrder.innerHTML = `
+  if (order.token === "628") {
+  }
+
+  if (order.status === "COMPLETE" || order.status === "OPEN" ) {
+    singleOrder.innerHTML = `
     <label>No. ${count}.&nbsp;</label>
     <span>${order.tsym}&nbsp;&nbsp;</span>
     <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
@@ -844,6 +866,17 @@ function generateOrderDetails(order, id, count) {
     <label></label><span>${order.status}&nbsp;&nbsp;</span>
     <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
   `;
+  } else {
+    singleOrder.innerHTML = `
+    <label>No. ${count}.&nbsp;</label>
+    <span>${order.tsym}&nbsp;&nbsp;</span>
+    <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
+    <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
+    <label></label><span>${order.status}&nbsp;&nbsp;</span>
+    <label>Pos:&nbsp</label><span data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
+  `;
+  }
+
 
   if (id != "other-order-list") {
     singleOrder.innerHTML += `<br><div norenordno="${order.norenordno}" prc="${order.prc}" tsym="${order.tsym}" qty="${order.qty}" trantype="${order.trantype}"><button class="auto" onclick="modifyOrder(1, this)">--</button><button class="modify" onclick="modifyOrder(2, this)">Modify</button><button class="cancel" onclick="modifyOrder(3, this)">Cancel</button><button class="auto" onclick="modifyOrder(4, this)">Auto</button><button class="cancel" onclick="modifyOrder(5, this)">++</button><button class="cancel" onclick="modifyOrder(6, this)">Fry</button></div>`;

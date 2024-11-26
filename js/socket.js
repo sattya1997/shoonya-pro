@@ -71,6 +71,7 @@ function connectWebSocket() {
           createNiftyDataField(message);
         } else {
           createOrdersDataField(message);
+          updateOrderPos(message);
         }
         break;
       case "tf":
@@ -111,14 +112,54 @@ function updateOrderPos(data) {
   const token = data.tk;
   const elements = document.querySelectorAll(`[data-pos-id="${token}"]`);
   if (elements && data.lp) {
-    elements.forEach(element => {
+    for (var i = 0; i < elements.length; i++) {
+      var element = elements[i];
+      if (element.textContent === "Sold") {
+        continue;
+      }
+
       const posPrc = element.dataset.posPrc;
       const posQty = element.dataset.posQty;
       const type = element.dataset.posType;
       const status = element.dataset.posStatus;
-      const pos = parseFloat((curPrice * posQty) - (posPrc * posQty)).toFixed(2);
+      if (status === "DONE") {
+        continue;
+      }
+      var pos = parseFloat((curPrice * posQty) - (posPrc * posQty)).toFixed(2);
+
+      var result = orderDetailsForPnL.find(function(item) { return item.stock === token; });
+      var remaining = 0;
+      const sells = result.sell;
+      const buys = result.buy;
+      var totalSellQuantity = 0;
+      var totalBuyQuantity = 0;
+      var buyPrice = 0;
+      var sellPrice = 0;
+      var result = orderDetailsForPnL.find(function(item) { return item.stock === token; });
+      if (result && type === "B" && status === "COMPLETE" && result.buy && result.sell) {
+        sells.forEach(sell => {
+          sellPrice = sellPrice + (parseFloat(sell.qty)*sell.prc);
+          totalSellQuantity = totalSellQuantity + parseFloat(sell.qty);
+        });
+        buys.forEach(buy => {
+          buyPrice = buyPrice + (parseFloat(buy.prc)*parseFloat(buy.qty));
+          totalBuyQuantity = totalBuyQuantity + parseFloat(buy.qty);
+        });
+
+        result.remaining = result.remaining - posQty;
+        if (totalBuyQuantity === totalSellQuantity || result.remaining > 0) {
+          element.dataset.posStatus = "DONE";
+          element.innerText =  'Done';
+          element.style.color = 'green';
+          continue;
+        }
+      }
       
       if ((type === "S" && status === "OPEN") || (type === "B" && status === "COMPLETE")) {
+        if (type === "B" && remaining > 0) {
+          var rb = element.dataset.posRb;
+          pos = parseFloat((remaining * curPrice) - rb).toFixed(2);
+        }
         if (type === "B" && pos > 0) {
           element.innerText =  '+'+pos;
           element.style.color = 'green';
@@ -136,7 +177,32 @@ function updateOrderPos(data) {
           element.style.color = 'black';
         }
       }
-    })
+
+      if (type === "S" && status === "COMPLETE") {
+        element.dataset.posStatus = "SOLD";
+        var remainingPosQty = posQty;
+        totalBuyPriceForThisStock = 0;
+        buys.forEach(buy => {
+          if (buy.status === "COMPLETE" && remainingPosQty > 0) {
+            totalBuyPriceForThisStock = buy.prc * Math.min(parseFloat(buy.qty), parseFloat(remainingPosQty));
+            remainingPosQty = remainingPosQty - buy.qty;
+          }
+        });
+
+        pos = (posPrc * posQty) - totalBuyPriceForThisStock;
+        
+        if (pos > 0) {
+          element.innerText =  "+"+parseFloat(pos).toFixed(2);
+          element.style.color = "green";
+        } else if (pos < 0) {
+          element.innerText = parseFloat(pos).toFixed(2);
+          element.style.color = "red";
+        } else {
+          element.innerText =  0;
+          element.style.color = "black";
+        }
+      }
+    }
   }
 }
 
@@ -238,7 +304,7 @@ function createOrdersDataField(data) {
     `;
     };
     orderTag = ordersTag.querySelector("#order-" + data.tk);
-    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : parseFloat(data.pc) < 0 ? "#d00505" : "#8fa109";
+    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : parseFloat(data.pc) < 0 ? "#d00505" : "#938662";
   }
 
   if (isStoreDepth) {
