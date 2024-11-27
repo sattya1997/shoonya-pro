@@ -232,6 +232,28 @@ function createStockCard(data) {
   cardContent.appendChild(cardCloseBtn);
   cardContent.appendChild(cardHeader);
 
+  const cardBar = document.createElement("div");
+  cardBar.innerHTML = `
+      <div class="bar">
+      <div class="bar-container" data-name="details-days-range">
+        <div class="bar-header">
+          <span class="price" id="low-price">0</span>
+          <span class="title">Day's Range</span>
+          <span class="price" id="high-price">0</span>
+        </div>
+        <div class="range">
+          <div class="range-bar" id="priceBar"></div>
+          <div class="arrowContainer">
+            <div class="arrow" id="arrow">
+              <img src="./icons/arrow.svg" alt="^"/><span id="arrowText"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  cardContent.appendChild(cardBar);
+
   // Add grouped information
   const priceInfo = document.createElement("div");
   priceInfo.classList.add("info");
@@ -256,7 +278,8 @@ function createStockCard(data) {
       <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
       <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
       <label><p class="fontBolder">Last Trade Qty: </p><p id="${data.token}-ltq">${data.ltq}</p></label>
-    </div>`;
+    </div>
+  `;
 
   cardContent.appendChild(priceInfo);
 
@@ -300,6 +323,56 @@ function createStockCard(data) {
   document.querySelector(`[data-id="btn-sell-${data.token}"]`).addEventListener("click", () => {
     handleSellButtonClick(data);
   });
+
+  const cardElementForBar = document.getElementById('card-'+data.token);
+
+  updateCardBar(cardElementForBar, data.o, data.lp, data.h, data.l);
+}
+
+function updateCardBar(cardElement, openPrice, currentPrice, highPrice, lowPrice) {
+  cardElement.querySelector("#low-price").innerHTML = lowPrice;
+  cardElement.querySelector("#low-price").style.fontWeight = "500";
+  cardElement.querySelector("#high-price").innerHTML = highPrice;
+  cardElement.querySelector("#high-price").style.fontWeight = "500";
+
+  const currentPercentage =
+    ((currentPrice - lowPrice) / (highPrice - lowPrice)) * 100;
+  const openPercent = ((openPrice - lowPrice) / (highPrice - lowPrice)) * 100;
+
+  const barElement = cardElement.querySelector("#priceBar");
+  const arrowElement = cardElement.querySelector("#arrow");
+  const arrowText = cardElement.querySelector("#arrowText");
+
+  barElement.style.backgroundColor =
+    currentPrice >= openPrice ? "#95d899" : "#ff8181";
+  barElement.style.left = `${openPercent}%`;
+
+  arrowElement.style.left = `${currentPercentage}%`;
+  arrowText.innerHTML = currentPrice;
+
+  if (currentPrice >= openPrice) {
+    barElement.style.left = `${openPercent}%`;
+    barElement.style.width = `${currentPercentage - openPercent}%`;
+  } else {
+    barElement.style.left = `${currentPercentage}%`;
+    barElement.style.width = `${openPercent - currentPercentage}%`;
+  }
+
+  if (openPrice === highPrice || currentPrice === highPrice) {
+    barElement.style.borderBottomRightRadius = "10px";
+    barElement.style.borderTopRightRadius = "10px";
+  } else {
+    barElement.style.borderBottomRightRadius = "0";
+    barElement.style.borderTopRightRadius = "0";
+  }
+
+  if (openPrice === lowPrice || currentPrice === lowPrice) {
+    barElement.style.borderBottomLeftRadius = "10px";
+    barElement.style.borderTopLeftRadius = "10px";
+  } else {
+    barElement.style.borderBottomLeftRadius = "0";
+    barElement.style.borderTopLeftRadius = "0";
+  }
 }
 
 function handleBuyButtonClick(data) {

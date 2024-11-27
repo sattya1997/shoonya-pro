@@ -460,10 +460,15 @@ fileInput.addEventListener("change", function (event) {
 });
 
 function refreshCardData(data) {
+  var curPrice = 0;
+  var openPrice = 0;
+  var highPrice = 0;
+  var lowPrice = 0;
   if (data.tk) {
     const card = document.getElementById('card-' + data.tk);
     if (card) {
       if (data.lp) {
+        curPrice = data.lp;
         const element = document.getElementById(data.tk+"-last-price");
         element.textContent = data.lp;
         const openPrice = parseFloat(document.getElementById(data.tk+'-open').textContent);
@@ -507,10 +512,12 @@ function refreshCardData(data) {
       }
 
       if (data.h) {
+        highPrice = data.h;
         document.getElementById(data.tk+"-high").innerText = data.h;
       }
 
       if (data.l) {
+        lowPrice = data.l;
         document.getElementById(data.tk+"-low").innerText = data.l;
       }
 
@@ -535,6 +542,22 @@ function refreshCardData(data) {
       if (data.sp4) updateElement2(4, data.sp4, null);
       if (data.sq5) updateElement2(5, null, data.sq5);
       if (data.sp5) updateElement2(5, data.sp5, null);
+
+      //update Bar
+      openPrice = document.getElementById(data.tk+"-open").innerHTML;
+
+      if (curPrice === 0) {
+        curPrice = document.getElementById(data.tk+"-last-price").innerHTML;
+      }
+
+      if (highPrice === 0) {
+        highPrice = document.getElementById(data.tk+"-high").innerHTML;
+      }
+
+      if (lowPrice === 0) {
+        lowPrice = document.getElementById(data.tk+"-low").innerHTML;
+      }
+      updateCardBar(card, openPrice, curPrice, highPrice, lowPrice);
     } else {
       console.log('card not found'+ data);
     }
