@@ -88,9 +88,7 @@ function connectWebSocket() {
         break;
       case "df":
         // Depth feed update
-        if (analyzeStart) {
-          refreshCardData(message);
-        }
+        refreshCardData(message);
         break;
       case "ok":
         // Order update subscription acknowledgement
@@ -111,99 +109,51 @@ function updateOrderPos(data) {
   const curPrice = data.lp;
   const token = data.tk;
   const elements = document.querySelectorAll(`[data-pos-id="${token}"]`);
-  if (elements && data.lp) {
-    for (var i = 0; i < elements.length; i++) {
-      var element = elements[i];
-      if (element.textContent === "Sold") {
-        continue;
-      }
-
-      const posPrc = element.dataset.posPrc;
-      const posQty = element.dataset.posQty;
-      const type = element.dataset.posType;
-      const status = element.dataset.posStatus;
-      if (status === "DONE") {
-        continue;
-      }
-      var pos = parseFloat((curPrice * posQty) - (posPrc * posQty)).toFixed(2);
-
-      var result = orderDetailsForPnL.find(function(item) { return item.stock === token; });
-      var remaining = 0;
-      const sells = result.sell;
-      const buys = result.buy;
-      var totalSellQuantity = 0;
-      var totalBuyQuantity = 0;
-      var buyPrice = 0;
-      var sellPrice = 0;
-      var result = orderDetailsForPnL.find(function(item) { return item.stock === token; });
-      if (result && type === "B" && status === "COMPLETE" && result.buy && result.sell) {
-        sells.forEach(sell => {
-          sellPrice = sellPrice + (parseFloat(sell.qty)*sell.prc);
-          totalSellQuantity = totalSellQuantity + parseFloat(sell.qty);
-        });
-        buys.forEach(buy => {
-          buyPrice = buyPrice + (parseFloat(buy.prc)*parseFloat(buy.qty));
-          totalBuyQuantity = totalBuyQuantity + parseFloat(buy.qty);
-        });
-
-        result.remaining = result.remaining - posQty;
-        if (totalBuyQuantity === totalSellQuantity || result.remaining > 0) {
-          element.dataset.posStatus = "DONE";
-          element.innerText =  'Done';
-          element.style.color = 'green';
-          continue;
-        }
-      }
-      
-      if ((type === "S" && status === "OPEN") || (type === "B" && status === "COMPLETE")) {
-        if (type === "B" && remaining > 0) {
-          var rb = element.dataset.posRb;
-          pos = parseFloat((remaining * curPrice) - rb).toFixed(2);
-        }
-        if (type === "B" && pos > 0) {
-          element.innerText =  '+'+pos;
-          element.style.color = 'green';
-        } else if (type === "B" && pos < 0) {
-          element.innerText =  pos;
-          element.style.color = 'red';
-        } else if (type === "S" && pos > 0){
-          element.innerText =  pos;
-          element.style.color = 'red';
-        } else if (type === "S" && pos < 0){
-          element.innerText =  pos;
-          element.style.color = 'green';
-        } else {
-          element.innerText =  pos;
-          element.style.color = 'black';
-        }
-      }
-
-      if (type === "S" && status === "COMPLETE") {
-        element.dataset.posStatus = "SOLD";
-        var remainingPosQty = posQty;
-        totalBuyPriceForThisStock = 0;
-        buys.forEach(buy => {
-          if (buy.status === "COMPLETE" && remainingPosQty > 0) {
-            totalBuyPriceForThisStock = buy.prc * Math.min(parseFloat(buy.qty), parseFloat(remainingPosQty));
-            remainingPosQty = remainingPosQty - buy.qty;
-          }
-        });
-
-        pos = (posPrc * posQty) - totalBuyPriceForThisStock;
-        
-        if (pos > 0) {
-          element.innerText =  "+"+parseFloat(pos).toFixed(2);
-          element.style.color = "green";
-        } else if (pos < 0) {
-          element.innerText = parseFloat(pos).toFixed(2);
-          element.style.color = "red";
-        } else {
-          element.innerText =  0;
-          element.style.color = "black";
-        }
-      }
+  if (!elements || !data.lp) return;
+  elements.forEach((element) => {
+    if (element.textContent === "Sold" || element.dataset.posStatus === "DONE") return;
+    const posPrc = parseFloat(element.dataset.posPrc);
+    const posQty = parseFloat(element.dataset.posQty);
+    const type = element.dataset.posType;
+    const status = element.dataset.posStatus;
+    let pos = parseFloat(curPrice * posQty - posPrc * posQty).toFixed(2);
+    let result = orderDetailsForPnL.find((item) => item.stock === token);
+    if (!result) return;
+    const { sell: sells, buy: buys } = result;
+    let totalSellQty = sells.reduce(
+      (total, sell) => total + parseFloat(sell.qty),
+      0
+    );
+    let totalBuyQty = buys.reduce((total, buy) => total + parseFloat(buy.qty), 0);
+    result.remaining -= posQty;
+    if ((type === "B" && status === "COMPLETE" && totalBuyQty === totalSellQty) || result.remaining > 0) {
+      element.dataset.posStatus = "DONE";
+      element.innerText = "Done";
+      element.style.color = "green";
+      return;
     }
-  }
+    if ((type === "S" && status === "OPEN") || (type === "B" && status === "COMPLETE")) {
+      if (type === "B" && result.remaining > 0) {
+        pos = parseFloat(result.remaining * curPrice - parseFloat(element.dataset.posRb)).toFixed(2);
+      }
+      element.innerText = pos > 0 ? `+${pos}` : pos;
+      element.style.color = pos > 0 ? "green" : "red";
+    }
+    if (type === "S" && status === "COMPLETE") {
+      element.dataset.posStatus = "SOLD";
+      let remainingQty = posQty;
+      let totalBuyPriceForThisStock = buys.reduce((total, buy) => {
+        if (buy.status === "COMPLETE" && remainingQty > 0) {
+          total += buy.prc * Math.min(parseFloat(buy.qty), remainingQty);
+          remainingQty -= buy.qty;
+        }
+        return total;
+      }, 0);
+      pos = parseFloat(posPrc * posQty - totalBuyPriceForThisStock).toFixed(2);
+      element.innerText = pos > 0 ? `+${pos}` : pos;
+      element.style.color = pos > 0 ? "green" : "red";
+    }
+  });
 }
 
 function reconnect() {

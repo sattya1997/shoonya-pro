@@ -237,44 +237,39 @@ function createStockCard(data) {
   priceInfo.classList.add("info");
   let priceChange = data.lp - data.o;
   let percentChange = parseFloat((priceChange * 100) / data.o).toFixed(2);
-  const change =
-    parseFloat(priceChange).toFixed(2) + "(" + percentChange + " %)";
+  const change = parseFloat(priceChange).toFixed(2) + " (" + percentChange + " %)";
   const classValue = percentChange > 0 ? "green" : "red";
-  priceInfo.innerHTML = `
-        <div class="sub-info">
-        <label><button data-id="btn-buy-${data.token}" token="${data.token}" class="auto">Buy</button></label>
-        <label style="color:${classValue};"><p class="fontBolder">Last Price: </p><p class="fontBolder" id="${data.token}-last-price">${data.lp}</p></label>
-        <label><p class="fontBolder">Prev close: </p><p id="${data.token}-prev-close">${data.c}</p></label>
-        <label style="color:#d3d332;"><p class="fontBolder">Open: </p><p id="${data.token}-open">${data.o}</p></label>
-        <label style="color:#18bc9c"><p class="fontBolder">High: </p><p id="${data.token}-high">${data.h}</p></label>
-        <label style="color:#18bc9c"><p class="fontBolder">Low: </p><p id="${data.token}-low">${data.l}</p></label>
-        </div>`;
 
-  priceInfo.innerHTML += `<div class="sub-info" id="${data.token}-price-info">
-        <label><button data-id="btn-sell-${data.token}" token="${data.token}" class="cancel">Sell</button></label>
-        <label style="color:${classValue};"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
-        <label style="color:blue"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
-        <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
-        <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
-        <label><p class="fontBolder">Last Trade Qty: </p><p id="${data.token}-ltq">${data.ltq}</p></label>
-        </div>`;
+  priceInfo.innerHTML = `
+    <div class="sub-info">
+      <label><button data-id="btn-buy-${data.token}" token="${data.token}" class="auto">Buy</button></label>
+      <label style="color:${classValue};"><p class="fontBolder">Last Price: </p><p class="fontBolder" id="${data.token}-last-price">${data.lp}</p></label>
+      <label><p class="fontBolder">Prev close: </p><p id="${data.token}-prev-close">${data.c}</p></label>
+      <label style="color:#d3d332;"><p class="fontBolder">Open: </p><p id="${data.token}-open">${data.o}</p></label>
+      <label style="color:#18bc9c"><p class="fontBolder">High: </p><p id="${data.token}-high">${data.h}</p></label>
+      <label style="color:#18bc9c"><p class="fontBolder">Low: </p><p id="${data.token}-low">${data.l}</p></label>
+    </div>
+    <div class="sub-info" id="${data.token}-price-info">
+      <label><button data-id="btn-sell-${data.token}" token="${data.token}" class="cancel">Sell</button></label>
+      <label style="color:${classValue};"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
+      <label style="color:blue"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
+      <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
+      <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
+      <label><p class="fontBolder">Last Trade Qty: </p><p id="${data.token}-ltq">${data.ltq}</p></label>
+    </div>`;
 
   cardContent.appendChild(priceInfo);
+
   // Best Buy Information
   const orderGroup = document.createElement("div");
-  var htmlData = "";
+  let htmlData = "";
 
   // Best Buy Information
   htmlData += '<div class="orders font-green"><div class="buy-orders">';
   htmlData += '<label class="fontBolder">Pending buy Orders: </label>';
   for (let i = 1; i <= 5; i++) {
     if (data["bp" + i]) {
-      htmlData +=
-        `<span id='${data.token}-buy-price-${i}'>` +
-        data["bp" + i] +
-        " × " +
-        data["bq" + i] +
-        "</span>";
+      htmlData += `<span id='${data.token}-buy-price-${i}'>${data["bp" + i]} × ${data["bq" + i]}</span>`;
     }
   }
   htmlData += "</div>";
@@ -284,39 +279,26 @@ function createStockCard(data) {
   htmlData += '<label class="fontBolder">Pending sell Orders: </label>';
   for (let i = 1; i <= 5; i++) {
     if (data["sp" + i]) {
-      htmlData +=
-        `<span id='${data.token}-sell-price-${i}'>` +
-        data["sp" + i] +
-        " × " +
-        data["sq" + i] +
-        "</span>";
+      htmlData += `<span id='${data.token}-sell-price-${i}'>${data["sp" + i]} × ${data["sq" + i]}</span>`;
     }
   }
   htmlData += "</div></div>";
 
-  orderGroup.innerHTML += htmlData;
+  orderGroup.innerHTML = htmlData;
   cardContent.appendChild(orderGroup);
 
   const card = document.createElement("div");
   card.classList.add("card");
-  card.setAttribute("id", `card-${data["token"]}`);
+  card.setAttribute("id", `card-${data.token}`);
   card.appendChild(cardContent);
   detailsList.appendChild(card);
 
-  const buyButtons = document.querySelectorAll('[data-id^="btn-buy-"]');
-  // Add a click event listener to each button
-  buyButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      handleBuyButtonClick(data);
-    });
+  // Add event listeners for buy and sell buttons
+  document.querySelector(`[data-id="btn-buy-${data.token}"]`).addEventListener("click", () => {
+    handleBuyButtonClick(data);
   });
-
-  const sellButtons = document.querySelectorAll('[data-id^="btn-sell-"]');
-  // Add a click event listener to each button
-  sellButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      handleSellButtonClick(data);
-    });
+  document.querySelector(`[data-id="btn-sell-${data.token}"]`).addEventListener("click", () => {
+    handleSellButtonClick(data);
   });
 }
 
