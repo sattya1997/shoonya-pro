@@ -1,0 +1,225 @@
+* {
+    top: 0;
+    left: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html {
+    width: 100%;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    display: block;
+    box-sizing: border-box;
+
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.main-container {
+    padding: 15px 5px 5px 5px;
+}
+
+@media (max-width: 500px) {
+    .main-container {
+        margin-top: 35px;
+    }
+}
+
+@media (min-width: 500px) {
+    #candle-stick {
+        display:grid;
+        justify-content:center;
+        width:100%;
+        height:75vh;
+    }
+}
+
+#control-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: #dce5ff;
+}
+
+#control-bar button {
+    background-color: #1d90f5;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin: 0 5px;
+    border-radius: 5px;
+    min-width: 50px;
+}
+
+#control-bar span {
+    margin-right: 10px;
+}
+
+#control-bar button:hover {
+    transform: scale(1.05);
+    background-color: #0074d9;
+}
+
+#control-bar button:active {
+    transform: scale(0.95);
+}
+
+.back-button {
+    background-color: #b4dcff;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    height: 28px;
+}
+
+.back-button:hover {
+    transform: scale(1.05);
+    background-color: #8dcaff;
+}
+
+.back-button:active {
+    transform: scale(0.95);
+}
+
+.slidecontainer {
+    display: grid;
+    width: 95%;
+    margin-top: -10px;
+    justify-content: center;
+}
+
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80vw;
+    height: 15px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    margin-bottom: 100px;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #658bff;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #55b2fe;
+    cursor: pointer;
+}
+
+.slider-text {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+/* Style the checkbox container */
+.checkbox-container {
+    margin-top: 8px;
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #ffffff;
+    border-radius: 4px;
+}
+
+/* On mouse-over, add a grey background color */
+.checkbox-container:hover input~.checkmark {
+    background-color: #aaaaaa;
+}
+
+/* When the checkbox is checked, change the background and checkmark color */
+.checkbox-container input:checked~.checkmark {
+    background-color: #2196F3;
+    /* Blue background */
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.checkbox-container input:checked~.checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.checkbox-container .checkmark:after {
+    left: 9px;
+    top: 5px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+.view-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: #dce5ff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.view-bar span{
+margin-right: 10px;
+}

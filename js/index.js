@@ -216,6 +216,8 @@ function closeCard(token) {
 
 function createStockCard(data) {
   const detailsList = document.getElementById("details-list");
+  const goToChartPage = document.createElement("div");
+  goToChartPage.innerHTML = `<a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}">Chart</a>`;
   const cardCloseBtn = document.createElement("div");
   cardCloseBtn.classList.add("close-modal");
   cardCloseBtn.addEventListener("click", () => {
@@ -231,6 +233,7 @@ function createStockCard(data) {
 
   cardContent.appendChild(cardCloseBtn);
   cardContent.appendChild(cardHeader);
+  cardContent.appendChild(goToChartPage);
 
   const cardBar = document.createElement("div");
   cardBar.innerHTML = `
@@ -327,6 +330,10 @@ function createStockCard(data) {
   const cardElementForBar = document.getElementById('card-'+data.token);
 
   updateCardBar(cardElementForBar, data.o, data.lp, data.h, data.l);
+}
+
+function goToChartPage(data) {
+  console.log(data);
 }
 
 function updateCardBar(cardElement, openPrice, currentPrice, highPrice, lowPrice) {
