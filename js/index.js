@@ -339,7 +339,7 @@ function placeBlankOrder() {
         </form>
       `;
   document.getElementById("cash-balance").textContent =
-    cashAvailable.toFixed(2);
+    parseFloat(cashAvailable).toFixed(2);
   document
     .getElementById("close-order-form")
     .addEventListener("click", closeOrderPlaceForm);
@@ -381,7 +381,7 @@ function handleBlankOrderSubmit(event) {
 
   if (
     orderType === "buy" &&
-    parseFloat(quantity) * parseFloat(limitPrice) > cashAvailable
+    parseFloat(quantity) * parseFloat(limitPrice) > parseFloat(cashAvailable)
   ) {
     alert("Warning: Order value exceeds cash balance!");
     return;
@@ -448,7 +448,7 @@ function createPlaceOrderForm(data, orderType) {
         </form>
       `;
   document.getElementById("cash-balance").textContent =
-    cashAvailable.toFixed(2);
+    parseFloat(cashAvailable).toFixed(2);
   document
     .querySelector('input[name="quantity"]')
     .addEventListener("input", updateOrderValue);
@@ -467,7 +467,7 @@ function createPlaceOrderForm(data, orderType) {
 
       if (
         orderType === "buy" &&
-        parseFloat(quantity) * parseFloat(limitPrice) > cashAvailable
+        parseFloat(quantity) * parseFloat(limitPrice) > parseFloat(cashAvailable)
       ) {
         alert("Warning: Order value exceeds cash balance!");
         return;
@@ -552,7 +552,7 @@ function updateOrderValue() {
     }
     return;
   } else {
-    document.getElementById("cash-balance").textContent = cashAvailable;
+    document.getElementById("cash-balance").textContent = parseFloat(cashAvailable).toFixed(2);
   }
 
   if (orderValue > cashAvailable) {
@@ -590,7 +590,7 @@ function createModifiedPlaceOrderForm(jData) {
   oldOrderValue = parseFloat(jData["qty"]) * parseFloat(jData["prc"]);
 
   document.getElementById("cash-balance").textContent =
-    cashAvailable.toFixed(2);
+    parseFloat(cashAvailable).toFixed(2);
   document
     .querySelector('input[name="quantity"]')
     .addEventListener("input", updateOrderValue);
@@ -968,7 +968,7 @@ function getBalance() {
       
 
       document.getElementById("nav-bar-total-cash").innerHTML =
-        "Cash: " + "&#8377; " + cashAvailable;
+        "Cash: " + "&#8377; " + parseFloat(cashAvailable).toFixed(2);
       
       if ( value.rpnl && parseFloat(value.rpnl) > 0) {
         document.getElementById("nav-bar-pl").style.color = "#f65454"
@@ -982,7 +982,7 @@ function getBalance() {
       }
       const balanceElemetInOrder = document.getElementById("cash-balance");
       if (balanceElemetInOrder) {
-        balanceElemetInOrder.textContent = cashAvailable.toFixed(2);
+        balanceElemetInOrder.textContent = parseFloat(cashAvailable).toFixed(2);
       }
     }
   });
