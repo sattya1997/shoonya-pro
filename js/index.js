@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      localStorage.removeItem("pro-userToken");
+      //localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -78,6 +78,7 @@ async function searchScrip() {
                     <button class="search-list-btn" onclick="addTodetailsList('${item.token}')">Card</button>
                     <button class="search-list-btn" onclick="addToTagList('${item.token}', '${item.tsym}')">Tag</button>
                     <button data-id="btn-sell-list-${item.token}" token="${item.token}" class="cancel">Sell</button>
+                    <a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${item.token}">Chart</a>
                   </span>
                 </li>
               `;

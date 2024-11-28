@@ -214,6 +214,7 @@ function unsubscribeOrderUpdate() {
 }
 
 function createNiftyDataField(data) {
+  const niftyTag = document.getElementById("nifty-tag");
   if (data && data.ft && data.lp && data.pc) {
     var sym;
     const date = new Date(data.ft * 1000);
@@ -228,7 +229,6 @@ function createNiftyDataField(data) {
       sym = data.pc > 0 ? "+" : "";
     }
 
-    const niftyTag = document.getElementById("nifty-tag");
     niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
     niftyTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : "#d00505";
   }
@@ -294,7 +294,7 @@ function showPopup(orderTag) {
     <p>${name}</p>
     <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
     <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
-    <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Details</button>
+    <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
   `;
 
   // Position the popup
@@ -340,18 +340,12 @@ function closeChart() {
 }
 
 function handleDetails(tokenId, left, top) {
-  const mainPopup = document.getElementById("dynamic-popup");
   closeChart();
   const chartPopup = document.createElement("div");
   chartPopup.id = "chart-popup";
   chartPopup.innerHTML = `<canvas id="stockChart" data-id="chart-${tokenId}"></canvas>`;
-  if (window.innerWidth < 350 && left > 50) {
-    left = left - left + 20;
-  }
-  if (window.innerWidth < 530 && window.innerWidth > 350  && left > 50) {
-    left = left - left + 150;
-  }
   chartPopup.style.top = `${top}px`;
+  chartPopup.style.minWidth = '300px';
   document.body.appendChild(chartPopup);
   getChartData(tokenId);
 }
@@ -410,7 +404,7 @@ function createGraph(graphData) {
           label: "Stock Price",
           data: prices,
           borderColor: "black",
-          borderWidth: 1,
+          borderWidth: .7,
           fill: true,
           pointRadius: 0,
         },
@@ -634,6 +628,19 @@ const customButton = document.getElementById("custom-file-upload-button");
 
 customButton.addEventListener("click", function () {
   fileInput.click();
+});
+
+const niftyTag = document.getElementById("nifty-tag");
+
+niftyTag.addEventListener("click", (event) => {
+  if (!niftyChartActive) {
+    handleDetails(26000, 0, niftyTag.getBoundingClientRect().left);
+    niftyChartActive = true;
+  } else {
+    closeChart();
+    niftyChartActive = false;
+  }
+  
 });
 
 fileInput.addEventListener("change", function (event) {

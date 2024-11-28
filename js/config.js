@@ -54,6 +54,8 @@ const routes = {
 
 const uid = "FA393936";
 
+var niftyChartActive = false
+
 function postRequest(route, params, usertoken = "") {
   let url = API.endpoint() + routes[route];
   let payload = "jData=" + JSON.stringify(params);
