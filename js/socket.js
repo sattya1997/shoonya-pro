@@ -248,11 +248,11 @@ function createOrdersDataField(data) {
       `;
     } else {
       ordersTag.innerHTML += `
-      <div class="order-tag" id="order-${data.tk}">${
-        orderNames[data.tk].split("-")[0]
-      }: ${data.lp} (${sym}${data.pc}%)</div>
-    `;
-    };
+        <div class="order-tag" id="order-${data.tk}" data-token="${data.tk}" data-name="${orderNames[data.tk].split("-")[0]}">
+          ${orderNames[data.tk].split("-")[0]}: ${data.lp} (${sym}${data.pc}%)
+        </div>
+      `;
+    }
     orderTag = ordersTag.querySelector("#order-" + data.tk);
     orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : parseFloat(data.pc) < 0 ? "#d00505" : "#938662";
   }
@@ -264,6 +264,75 @@ function createOrdersDataField(data) {
       addDepthRow(depthData);
     }
   }
+}
+
+// Event Delegation: Set up the listener on the parent container
+document.getElementById("orders-tag").addEventListener("click", (event) => {
+  const orderTag = event.target.closest(".order-tag");
+  if (orderTag) {
+    showPopup(orderTag);
+  }
+});
+
+// Function to show the popup
+function showPopup(orderTag) {
+  const tokenId = orderTag.dataset.token;
+  const name = orderTag.dataset.name;
+  
+  // Remove any existing popups
+  const existingPopup = document.getElementById("dynamic-popup");
+  if (existingPopup) {
+    existingPopup.remove();
+  }
+
+  // Create a new popup div
+  const popup = document.createElement("div");
+  popup.id = "dynamic-popup";
+
+  // Update the popup content with buttons
+  popup.innerHTML = `
+    <p>${name}</p>
+    <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
+    <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
+    <button onclick="handleDetails(${tokenId})">Details</button>
+  `;
+
+  // Position the popup
+  const rect = orderTag.getBoundingClientRect();
+  var left = rect.left;
+  if (window.innerWidth < 350 && left > 50) {
+    left = left - left + 20;
+  }
+
+  if (window.innerWidth < 530 && window.innerWidth > 350  && left > 50) {
+    left = left - left + 150;
+  }
+  popup.style.left = `${left}px`;
+  popup.style.top = `${rect.top - popup.offsetHeight}px`;
+
+  // Add the popup to the body
+  document.body.appendChild(popup);
+}
+
+// Function to hide the popup when clicking outside
+document.addEventListener("click", (event) => {
+  const popup = document.getElementById("dynamic-popup");
+  const ordersTag = document.getElementById("orders-tag");
+  if (popup && !popup.contains(event.target) && !ordersTag.contains(event.target)) {
+    popup.remove();
+  }
+});
+
+function handleBuy(tokenId) {
+  handleBuySellButtonClickFromResultsList(tokenId, "buy");
+}
+
+function handleSell(tokenId) {
+  handleBuySellButtonClickFromResultsList(tokenId, "sell");
+}
+
+function handleDetails(tokenId) {
+  console.log(`Details clicked for token ${tokenId}`);
 }
 
 const headers = [
