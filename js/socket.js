@@ -294,7 +294,7 @@ function showPopup(orderTag) {
     <p>${name}</p>
     <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
     <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
-    <button onclick="handleDetails(${tokenId})">Details</button>
+    <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Details</button>
   `;
 
   // Position the popup
@@ -320,6 +320,7 @@ document.addEventListener("click", (event) => {
   const ordersTag = document.getElementById("orders-tag");
   if (popup && !popup.contains(event.target) && !ordersTag.contains(event.target)) {
     popup.remove();
+    closeChart();
   }
 });
 
@@ -331,8 +332,127 @@ function handleSell(tokenId) {
   handleBuySellButtonClickFromResultsList(tokenId, "sell");
 }
 
-function handleDetails(tokenId) {
-  console.log(`Details clicked for token ${tokenId}`);
+function closeChart() {
+  const oldPopup = document.getElementById("chart-popup");
+  if (oldPopup) {
+    oldPopup.remove();
+  }
+}
+
+function handleDetails(tokenId, left, top) {
+  const mainPopup = document.getElementById("dynamic-popup");
+  closeChart();
+  const chartPopup = document.createElement("div");
+  chartPopup.id = "chart-popup";
+  chartPopup.innerHTML = `<canvas id="stockChart" data-id="chart-${tokenId}"></canvas>`;
+  if (window.innerWidth < 350 && left > 50) {
+    left = left - left + 20;
+  }
+  if (window.innerWidth < 530 && window.innerWidth > 350  && left > 50) {
+    left = left - left + 150;
+  }
+  chartPopup.style.top = `${top}px`;
+  document.body.appendChild(chartPopup);
+  getChartData(tokenId);
+}
+
+async function getChartData(tokenId) {
+  var chartData = [];
+  const userToken = localStorage.getItem("pro-userToken");
+  const now = new Date();
+  const marketEndTime = new Date(now);
+  marketEndTime.setHours(15, 30, 0, 0);
+  const endTime = now > marketEndTime ? marketEndTime : now;
+  var et = Math.floor(endTime.getTime() / 1000);
+
+  const startTime = new Date(endTime);
+  startTime.setMinutes(startTime.getMinutes() - parseInt(180));
+  const st = Math.floor(startTime.getTime() / 1000);
+  const jData = {
+    uid: uid,
+    exch: "NSE",
+    token: tokenId.toString(),
+    st: st.toString(),
+    et: et.toString()
+  }
+  const jKey = userToken;
+  postRequest("TPSeries", jData, jKey)
+  .then((res) => {
+    if (res && res.data && res.data.length > 0) {
+      const stockData = res.data;
+      chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv }; });
+      var newChartData = chartData.reverse();
+      chartData = newChartData.map((item) => ({
+        x: item.t,
+        c: item.c,
+        v: item.v,
+      }));
+
+      createGraph(chartData);
+    }
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+  });
+}
+
+function createGraph(graphData) {
+  const times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
+  const prices = graphData.map(item => item.c);
+
+  const ctx = document.querySelector("#stockChart").getContext("2d");
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: times,
+      datasets: [
+        {
+          label: "Stock Price",
+          data: prices,
+          borderColor: "black",
+          borderWidth: 1,
+          fill: true,
+          pointRadius: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: "time",
+          unit: "minute",
+          displayFormats: {
+            minute: "HH:mm",
+          },
+        },
+        y: {
+          title: {
+            display: false,
+          },
+          ticks: {
+            fontSize: 10,
+          },
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
+
+  chart.update();
+}
+
+function convertToMilliseconds(timeString) {
+  const [date, time] = timeString.split(' ');
+  const [day, month, year] = date.split('-');
+  const [hours, minutes, seconds] = time.split(':');
+  const dateObj = new Date(year, month - 1, day, hours, minutes, seconds);
+  return dateObj.getTime();
 }
 
 const headers = [
