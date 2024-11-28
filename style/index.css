@@ -688,10 +688,14 @@ input:checked+.slider:before {
   width: 100%;
   max-width: 700px;
   font-size: 10px;
+  text-align: center;
+  align-content: center;
 }
 
 #depth-toolbar span {
   margin: 0 5px;
+  display: flex;
+  align-items: center; /* Align items in the center vertically */
 }
 
 #depth-toolbar label {
@@ -701,6 +705,7 @@ input:checked+.slider:before {
 #depth-toolbar input[type="checkbox"] {
   accent-color: #18bc9c;
 }
+
 
 #depth-toolbar button {
   background-color: #18bc9c;
