@@ -214,6 +214,7 @@ function unsubscribeOrderUpdate() {
 }
 
 function createNiftyDataField(data) {
+  const niftyTag = document.getElementById("nifty-tag");
   if (data && data.ft && data.lp && data.pc) {
     var sym;
     const date = new Date(data.ft * 1000);
@@ -228,7 +229,6 @@ function createNiftyDataField(data) {
       sym = data.pc > 0 ? "+" : "";
     }
 
-    const niftyTag = document.getElementById("nifty-tag");
     niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
     niftyTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : "#d00505";
   }
@@ -248,11 +248,11 @@ function createOrdersDataField(data) {
       `;
     } else {
       ordersTag.innerHTML += `
-      <div class="order-tag" id="order-${data.tk}">${
-        orderNames[data.tk].split("-")[0]
-      }: ${data.lp} (${sym}${data.pc}%)</div>
-    `;
-    };
+        <div class="order-tag" id="order-${data.tk}" data-token="${data.tk}" data-name="${orderNames[data.tk].split("-")[0]}">
+          ${orderNames[data.tk].split("-")[0]}: ${data.lp} (${sym}${data.pc}%)
+        </div>
+      `;
+    }
     orderTag = ordersTag.querySelector("#order-" + data.tk);
     orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : parseFloat(data.pc) < 0 ? "#d00505" : "#938662";
   }
@@ -264,6 +264,189 @@ function createOrdersDataField(data) {
       addDepthRow(depthData);
     }
   }
+}
+
+// Event Delegation: Set up the listener on the parent container
+document.getElementById("orders-tag").addEventListener("click", (event) => {
+  const orderTag = event.target.closest(".order-tag");
+  if (orderTag) {
+    showPopup(orderTag);
+  }
+});
+
+// Function to show the popup
+function showPopup(orderTag) {
+  const tokenId = orderTag.dataset.token;
+  const name = orderTag.dataset.name;
+  
+  // Remove any existing popups
+  const existingPopup = document.getElementById("dynamic-popup");
+  if (existingPopup) {
+    existingPopup.remove();
+  }
+
+  // Create a new popup div
+  const popup = document.createElement("div");
+  popup.id = "dynamic-popup";
+
+  // Update the popup content with buttons
+  popup.innerHTML = `
+    <p>${name}</p>
+    <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
+    <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
+    <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
+  `;
+
+  // Position the popup
+  const rect = orderTag.getBoundingClientRect();
+  var left = rect.left;
+  if (window.innerWidth < 350 && left > 50) {
+    left = left - left + 20;
+  }
+
+  if (window.innerWidth < 530 && window.innerWidth > 350  && left > 50) {
+    left = left - left + 150;
+  }
+  popup.style.left = `${left}px`;
+  popup.style.top = `${rect.top - popup.offsetHeight}px`;
+
+  // Add the popup to the body
+  document.body.appendChild(popup);
+}
+
+// Function to hide the popup when clicking outside
+document.addEventListener("click", (event) => {
+  const popup = document.getElementById("dynamic-popup");
+  const ordersTag = document.getElementById("orders-tag");
+  if (popup && !popup.contains(event.target) && !ordersTag.contains(event.target)) {
+    popup.remove();
+    closeChart();
+  }
+});
+
+function handleBuy(tokenId) {
+  handleBuySellButtonClickFromResultsList(tokenId, "buy");
+}
+
+function handleSell(tokenId) {
+  handleBuySellButtonClickFromResultsList(tokenId, "sell");
+}
+
+function closeChart() {
+  const oldPopup = document.getElementById("chart-popup");
+  if (oldPopup) {
+    oldPopup.remove();
+  }
+}
+
+function handleDetails(tokenId, left, top) {
+  closeChart();
+  const chartPopup = document.createElement("div");
+  chartPopup.id = "chart-popup";
+  chartPopup.innerHTML = `<canvas id="stockChart" data-id="chart-${tokenId}"></canvas>`;
+  chartPopup.style.top = `${top}px`;
+  chartPopup.style.minWidth = '300px';
+  document.body.appendChild(chartPopup);
+  getChartData(tokenId);
+}
+
+async function getChartData(tokenId) {
+  var chartData = [];
+  const userToken = localStorage.getItem("pro-userToken");
+  const now = new Date();
+  const marketEndTime = new Date(now);
+  marketEndTime.setHours(15, 30, 0, 0);
+  const endTime = now > marketEndTime ? marketEndTime : now;
+  var et = Math.floor(endTime.getTime() / 1000);
+
+  const startTime = new Date(endTime);
+  startTime.setMinutes(startTime.getMinutes() - parseInt(180));
+  const st = Math.floor(startTime.getTime() / 1000);
+  const jData = {
+    uid: uid,
+    exch: "NSE",
+    token: tokenId.toString(),
+    st: st.toString(),
+    et: et.toString()
+  }
+  const jKey = userToken;
+  postRequest("TPSeries", jData, jKey)
+  .then((res) => {
+    if (res && res.data && res.data.length > 0) {
+      const stockData = res.data;
+      chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv }; });
+      var newChartData = chartData.reverse();
+      chartData = newChartData.map((item) => ({
+        x: item.t,
+        c: item.c,
+        v: item.v,
+      }));
+
+      createGraph(chartData);
+    }
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+  });
+}
+
+function createGraph(graphData) {
+  const times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
+  const prices = graphData.map(item => item.c);
+
+  const ctx = document.querySelector("#stockChart").getContext("2d");
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: times,
+      datasets: [
+        {
+          label: "Stock Price",
+          data: prices,
+          borderColor: "black",
+          borderWidth: .7,
+          fill: true,
+          pointRadius: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: "time",
+          unit: "minute",
+          displayFormats: {
+            minute: "HH:mm",
+          },
+        },
+        y: {
+          title: {
+            display: false,
+          },
+          ticks: {
+            fontSize: 10,
+          },
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
+
+  chart.update();
+}
+
+function convertToMilliseconds(timeString) {
+  const [date, time] = timeString.split(' ');
+  const [day, month, year] = date.split('-');
+  const [hours, minutes, seconds] = time.split(':');
+  const dateObj = new Date(year, month - 1, day, hours, minutes, seconds);
+  return dateObj.getTime();
 }
 
 const headers = [
@@ -445,6 +628,19 @@ const customButton = document.getElementById("custom-file-upload-button");
 
 customButton.addEventListener("click", function () {
   fileInput.click();
+});
+
+const niftyTag = document.getElementById("nifty-tag");
+
+niftyTag.addEventListener("click", (event) => {
+  if (!niftyChartActive) {
+    handleDetails(26000, 0, niftyTag.getBoundingClientRect().left);
+    niftyChartActive = true;
+  } else {
+    closeChart();
+    niftyChartActive = false;
+  }
+  
 });
 
 fileInput.addEventListener("change", function (event) {

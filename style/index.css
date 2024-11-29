@@ -22,7 +22,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 25px;
+  height: 30px;
   background-color: rgb(28, 28, 28);
   color: aliceblue;
   position: sticky;
@@ -83,7 +83,7 @@ body {
   justify-content: center;
   align-items: center;
   align-content: center;
-  padding: 20px;
+  padding: 2px;
 }
 
 #search-input {
@@ -119,7 +119,6 @@ body {
   overflow-x: hidden;
   display: none;
   z-index: 5;
-  margin-top: -19px;
 }
 
 #results-list {
@@ -132,35 +131,50 @@ body {
   width: 65vw;
 }
 
-#results-list button {
-  width: 35%;
-  border-radius: 2px;
-  transition: transform 0.3s ease;
-  color: white;
-  font-weight: 600;
-  max-width: 40px;
-  font-size: 9px;
-  border: none;
-  border-radius: 2px;
-  height: 20px;
-}
-
-#results-list button:hover {
-  background-color: #0e79ec;
-  transform: scale(1.05);
-}
-
-#results-list button:active {
-  transform: scale(.95);
-}
-
 .result-item {
   border-bottom: 1px solid #e1e1e1;
   padding: 5px;
 }
 
-.result-item>span:first-child {
+.result-item > span {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px; /* Add gap between elements */
+}
+
+.result-item > span:first-child {
   font-weight: 500;
+  flex-basis: 100%; /* Ensure full width for the first span */
+  text-align: left; /* Align text to the left */
+  margin-bottom: 5px; /* Add some space below */
+}
+
+.result-item button {
+  flex: 1; /* Allow buttons and links to flex */
+  min-width: 40px; /* Set a minimum width */
+  border-radius: 2px;
+  transition: transform 0.3s ease;
+  color: white;
+  font-weight: 600;
+  font-size: 9px;
+  border: none;
+  height: 20px;
+  text-align: center; /* Center text within the buttons */
+}
+
+.result-item a {
+  text-decoration: none;
+  color: black;
+}
+
+.result-item button:hover {
+  background-color: #0e79ec;
+  transform: scale(1.05);
+}
+
+.result-item button:active {
+  transform: scale(0.95);
 }
 
 .close-modal {
@@ -172,7 +186,7 @@ body {
   width: auto;
   height: auto;
   transition: all 0.3s ease;
-  margin: -10px 0 0 0;
+  margin: -7px -4px 0 0;
   position: sticky;
   z-index: 10;
 }
@@ -562,6 +576,7 @@ h5 {
 
 #nifty-tag {
   font-size: 13px;
+  margin-top: 8px;
 }
 
 #orders-tag {
@@ -571,6 +586,7 @@ h5 {
   justify-content: center;
   padding: 3px;
   width: 100%;
+  gap: 2px;
 }
 
 .order-tag {
@@ -688,10 +704,14 @@ input:checked+.slider:before {
   width: 100%;
   max-width: 700px;
   font-size: 10px;
+  text-align: center;
+  align-content: center;
 }
 
 #depth-toolbar span {
   margin: 0 5px;
+  display: flex;
+  align-items: center; /* Align items in the center vertically */
 }
 
 #depth-toolbar label {
@@ -701,6 +721,7 @@ input:checked+.slider:before {
 #depth-toolbar input[type="checkbox"] {
   accent-color: #18bc9c;
 }
+
 
 #depth-toolbar button {
   background-color: #18bc9c;
@@ -876,3 +897,83 @@ h1 {
   display: flex;
   justify-content: space-between;
 }
+
+/* CSS for the popup */
+#dynamic-popup {
+  position: absolute;
+  background-color: #e3e4ff;
+  border: 1px solid #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 5px;
+  z-index: 1000;
+  border-radius: 5px;
+  animation: fadeIn 0.2s ease-in-out;
+  opacity: 0.95;
+  transition: all 0.2s ease-in-out;
+}
+
+#dynamic-popup p {
+  text-align: center;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+}
+
+#dynamic-popup button {
+  min-width: 50px;
+  margin: 5px;
+  padding: 3px 3px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  transition: background-color 0.2s ease;
+}
+
+#dynamic-popup button:hover {
+  background-color: #0056b3;
+}
+
+/* Fade-in animation for the popup */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 0.95;
+    transform: translateY(0);
+  }
+}
+
+#chart-popup {
+  position: absolute;
+  background-color: #f3fff3;
+  border: 1px solid #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 5px;
+  z-index: 1000;
+  border-radius: 5px;
+  opacity: 0.95;
+  transition: all 0.2s ease-in-out;
+  left: 50%;
+  transform: translateX(-50%)
+}
+
+/* Fade-in animation for the popup */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 0.95;
+    transform: translateY(0);
+  }
+}
+
+

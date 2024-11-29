@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      localStorage.removeItem("pro-userToken");
+      //localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -78,6 +78,7 @@ async function searchScrip() {
                     <button class="search-list-btn" onclick="addTodetailsList('${item.token}')">Card</button>
                     <button class="search-list-btn" onclick="addToTagList('${item.token}', '${item.tsym}')">Tag</button>
                     <button data-id="btn-sell-list-${item.token}" token="${item.token}" class="cancel">Sell</button>
+                    <button style="background-color: #5bd3bb;"><a href="./chartPage.html?stockSymbol=${item.token}">Chart</a></button>
                   </span>
                 </li>
               `;
@@ -216,6 +217,8 @@ function closeCard(token) {
 
 function createStockCard(data) {
   const detailsList = document.getElementById("details-list");
+  const goToChartPage = document.createElement("div");
+  goToChartPage.innerHTML = `<a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}">Chart</a>`;
   const cardCloseBtn = document.createElement("div");
   cardCloseBtn.classList.add("close-modal");
   cardCloseBtn.addEventListener("click", () => {
@@ -231,6 +234,7 @@ function createStockCard(data) {
 
   cardContent.appendChild(cardCloseBtn);
   cardContent.appendChild(cardHeader);
+  cardContent.appendChild(goToChartPage);
 
   const cardBar = document.createElement("div");
   cardBar.innerHTML = `
@@ -327,6 +331,10 @@ function createStockCard(data) {
   const cardElementForBar = document.getElementById('card-'+data.token);
 
   updateCardBar(cardElementForBar, data.o, data.lp, data.h, data.l);
+}
+
+function goToChartPage(data) {
+  console.log(data);
 }
 
 function updateCardBar(cardElement, openPrice, currentPrice, highPrice, lowPrice) {

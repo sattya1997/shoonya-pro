@@ -6,6 +6,7 @@
   <title>Shoonya Dashboard</title>
   <script src="./js/axios.min.js"></script>
   <script src="./js/config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
   <link rel="stylesheet" href="./style/index.css">
 </head>
 <body>
@@ -18,8 +19,8 @@
   </div>
   <div id="main-container">
     <div id="depth-toolbar">
-      <span><label for="enable-checkbox">Enable Depth</label><input type="checkbox" id="enable-checkbox"></span>
-      <span><label for="enable-checkbox">Show/Hide</label><input type="checkbox" id="enable-show-hide"></span>
+      <span><label for="enable-checkbox">Depth</label><input type="checkbox" id="enable-checkbox"></span>
+      <span><label for="enable-checkbox">Show</label><input type="checkbox" id="enable-show-hide"></span>
       <span><button id="clear-button">Clear</button></span>
       <span><button id="save-button" onclick="saveFile()">Download</button></span>
       <span>
