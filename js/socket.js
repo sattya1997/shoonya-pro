@@ -111,7 +111,7 @@ function updateOrderPos(data) {
   const elements = document.querySelectorAll(`[data-pos-id="${token}"]`);
   if (!elements || !data.lp) return;
   elements.forEach((element) => {
-    if (element.textContent === "Sold" || element.dataset.posStatus === "DONE") return;
+    if (element.dataset.posStatus === "DONE") return;
     const posPrc = parseFloat(element.dataset.posPrc);
     const posQty = parseFloat(element.dataset.posQty);
     const type = element.dataset.posType;
@@ -119,14 +119,13 @@ function updateOrderPos(data) {
     let pos = parseFloat(curPrice * posQty - posPrc * posQty).toFixed(2);
     let result = orderDetailsForPnL.find((item) => item.stock === token);
     if (!result) return;
-    const { sell: sells, buy: buys } = result;
-    let totalSellQty = sells.reduce(
+    let totalSellQty = result.sell.reduce(
       (total, sell) => total + parseFloat(sell.qty),
       0
     );
-    let totalBuyQty = buys.reduce((total, buy) => total + parseFloat(buy.qty), 0);
+    let totalBuyQty = result.buy.reduce((total, buy) => total + parseFloat(buy.qty), 0);
     result.remaining -= posQty;
-    if ((type === "B" && status === "COMPLETE" && totalBuyQty === totalSellQty) || result.remaining > 0) {
+    if ((type === "B" && status === "COMPLETE" && totalBuyQty === totalSellQty) || (type === "B" && status === "COMPLETE" && result.remaining > 0)) {
       element.dataset.posStatus = "DONE";
       element.innerText = "Done";
       element.style.color = "green";
@@ -140,16 +139,21 @@ function updateOrderPos(data) {
       element.style.color = pos > 0 ? "green" : "red";
     }
     if (type === "S" && status === "COMPLETE") {
-      element.dataset.posStatus = "SOLD";
+      element.dataset.posStatus = "DONE";
       let remainingQty = posQty;
-      let totalBuyPriceForThisStock = buys.reduce((total, buy) => {
+      let total = 0;
+      result.buy.forEach((buy, index) => {
         if (buy.status === "COMPLETE" && remainingQty > 0) {
           total += buy.prc * Math.min(parseFloat(buy.qty), remainingQty);
           remainingQty -= buy.qty;
+          if (buy.qty <= posQty) {
+            delete result.buy[index];
+          } else {
+            result.buy.qty = (parseFloat(result.buy.qty) - posQty).toString();
+          }
         }
-        return total;
-      }, 0);
-      pos = parseFloat(posPrc * posQty - totalBuyPriceForThisStock).toFixed(2);
+      });
+      pos = parseFloat(posPrc * posQty - total).toFixed(2);
       element.innerText = pos > 0 ? `+${pos}` : pos;
       element.style.color = pos > 0 ? "green" : "red";
     }

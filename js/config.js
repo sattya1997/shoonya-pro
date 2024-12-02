@@ -89,6 +89,7 @@ var LTMB = 0;
 var STMB = 0;
 
 var orderDetailsForPnL = [];
+var showPnLTrue = false;
 
 class CircularBuffer {
   constructor(size) {

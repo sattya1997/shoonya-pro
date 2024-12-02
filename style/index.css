@@ -950,3 +950,47 @@ h1 {
   left: 50%;
   transform: translateX(-50%)
 }
+
+#trade-container {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  margin: 3px 0;
+  background: #fafafa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#trade-container h1 {
+  text-align: center;
+}
+
+#trade-list {
+  list-style: none;
+  padding: 0;
+}
+
+.trade-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.trade-item:last-child {
+  border-bottom: none;
+}
+
+.profit {
+  color: green;
+}
+
+.loss {
+  color: red;
+}
