@@ -701,7 +701,7 @@ input:checked+.slider:before {
 
 /* Styling for the toolbar */
 #depth-toolbar {
-  display: ruby;
+  display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #2c3e50;
