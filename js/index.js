@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      localStorage.removeItem("pro-userToken");
+      //localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -188,11 +188,11 @@ async function logout() {
     .then((data) => {
       if (data.stat === "Ok") {
         //have to uncomment later
-        localStorage.removeItem("pro-userToken");
+        //localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       } else {
         alert("Session expires. Please login again.");
-        localStorage.removeItem("pro-userToken");
+        //localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       }
     })
@@ -856,6 +856,7 @@ function getOrders() {
             buyOrderCount++;
             updateOrderDeatilsForPnL(order, "buy");
             generateOrderDetails(order, "buy-order-list", buyOrderCount);
+            updateOrderPos(order);
             if (orderNames[order.token] != order.tsym) {
               orderNames[order.token] = order.tsym;
               setTimeout(() => {
@@ -875,6 +876,7 @@ function getOrders() {
             sellOrderCount++;
             updateOrderDeatilsForPnL(order, "sell");
             generateOrderDetails(order, "sell-order-list", sellOrderCount);
+            updateOrderPos(order);
             if (orderNames[order.token] != order.tsym) {
               orderNames[order.token] = order.tsym;
               setTimeout(() => {

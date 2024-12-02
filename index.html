@@ -8,6 +8,7 @@
   <script src="./js/config.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
   <link rel="stylesheet" href="./style/index.css">
+  <script src="./js/pnL.js"></script>
 </head>
 <body>
   <div id="nav-bar">
@@ -21,6 +22,7 @@
     <div id="depth-toolbar">
       <span><label for="enable-checkbox">Depth</label><input type="checkbox" id="enable-checkbox"></span>
       <span><label for="enable-checkbox">Show</label><input type="checkbox" id="enable-show-hide"></span>
+      <span><button id="show-orders-button" onclick="showPnL()">PnL</button></span>
       <span><button id="clear-button">Clear</button></span>
       <span><button id="save-button" onclick="saveFile()">Download</button></span>
       <span>
@@ -44,7 +46,7 @@
       <span class="slider round"></span>
     </label>
     <div id="details-list"></div>
-    <!-- <div class="position-container"> <h4>Stock Positions</h4> <div id="stock-positions" class="stock-positions"></div></div> -->
+    <ul id="trade-list"></ul>
     <div class="orders-list">
       <div id="nifty-tag"></div>
       <div id="orders-tag"></div>
