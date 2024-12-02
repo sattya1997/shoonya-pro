@@ -475,7 +475,7 @@ function createGraph(graphData) {
         {
           label: "Stock Price",
           data: prices,
-          borderColor: "black",
+          borderColor: "white",
           borderWidth: .7,
           fill: true,
           pointRadius: 0,
