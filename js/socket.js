@@ -264,15 +264,29 @@ function createOrdersDataField(data) {
       addDepthRow(depthData);
     }
   }
+  // Event Delegation: Set up the listener on the parent container
+  document.getElementById("orders-tag").addEventListener("click", (event) => {
+    const orderTag = event.target.closest(".order-tag");
+    if (orderTag) {
+      showPopup(orderTag);
+      window.addEventListener('click', () => {
+        updatePopupPosition(orderTag);
+        updateNiftyTagPosition();
+      });
+    }
+  });
 }
 
-// Event Delegation: Set up the listener on the parent container
-document.getElementById("orders-tag").addEventListener("click", (event) => {
-  const orderTag = event.target.closest(".order-tag");
-  if (orderTag) {
-    showPopup(orderTag);
+function updateNiftyTagPosition() {
+  const niftyTag = document.getElementById("nifty-tag");
+  const niftyPopup = document.getElementById('chart-popup');
+  if (niftyTag) {
+    const rect = niftyTag.getBoundingClientRect();
+    if (niftyPopup) {
+      niftyPopup.style.top = `${rect.top + window.scrollY + 40}px`;
+    }
   }
-});
+}
 
 // Function to show the popup
 function showPopup(orderTag) {
@@ -310,8 +324,30 @@ function showPopup(orderTag) {
   popup.style.left = `${left}px`;
   popup.style.top = `${rect.top - popup.offsetHeight}px`;
 
+  // Position the popup 
+  updatePopupPosition(orderTag);
+
   // Add the popup to the body
   document.body.appendChild(popup);
+}
+
+function updatePopupPosition(orderTag) {
+  const popup = document.getElementById("dynamic-popup");
+  if (popup) {
+    const rect = orderTag.getBoundingClientRect();
+    let left = rect.left;
+    if (window.innerWidth < 350 && left > 50) {
+      left = 20;
+    } else if (
+      window.innerWidth < 530 &&
+      window.innerWidth > 350 &&
+      left > 50
+    ) {
+      left = 150;
+    }
+    popup.style.left = `${left}px`;
+    popup.style.top = `${rect.top + window.scrollY}px`;
+  }
 }
 
 // Function to hide the popup when clicking outside
@@ -348,6 +384,7 @@ function handleDetails(tokenId, left, top) {
   chartPopup.style.minWidth = '300px';
   document.body.appendChild(chartPopup);
   getChartData(tokenId);
+  updateNiftyTagPosition();
 }
 
 async function getChartData(tokenId) {
@@ -631,10 +668,11 @@ customButton.addEventListener("click", function () {
 });
 
 const niftyTag = document.getElementById("nifty-tag");
+const topp = window.innerHeight/2 + window.innerHeight/8;
 
 niftyTag.addEventListener("click", (event) => {
   if (!niftyChartActive) {
-    handleDetails(26000, 0, niftyTag.getBoundingClientRect().left);
+    handleDetails(26000, 0, topp);
     niftyChartActive = true;
   } else {
     closeChart();

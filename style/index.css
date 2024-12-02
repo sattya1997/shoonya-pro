@@ -907,9 +907,8 @@ h1 {
   padding: 5px;
   z-index: 1000;
   border-radius: 5px;
-  animation: fadeIn 0.2s ease-in-out;
   opacity: 0.95;
-  transition: all 0.2s ease-in-out;
+  /* transition: all 0.2s ease-in-out; */
 }
 
 #dynamic-popup p {
@@ -938,18 +937,6 @@ h1 {
   background-color: #0056b3;
 }
 
-/* Fade-in animation for the popup */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 0.95;
-    transform: translateY(0);
-  }
-}
-
 #chart-popup {
   position: absolute;
   background-color: #f3fff3;
@@ -959,21 +946,7 @@ h1 {
   z-index: 1000;
   border-radius: 5px;
   opacity: 0.95;
-  transition: all 0.2s ease-in-out;
+  /* transition: all 0.2s ease-in-out; */
   left: 50%;
   transform: translateX(-50%)
 }
-
-/* Fade-in animation for the popup */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 0.95;
-    transform: translateY(0);
-  }
-}
-
-
