@@ -1,8 +1,10 @@
 async function showPnL() {
+  const tradeList = document.getElementById("trade-list")
   if (showPnLTrue) {
     showPnLTrue = false;
+    tradeList.innerHTML = '';
     return;
-  }
+  } 
   const tradeData = await fetchTradeData();
   const positionData = await fetchPositionData();
 
@@ -10,7 +12,6 @@ async function showPnL() {
   const processedPositionData = processPositionData(positionData);
   if (processedTradeData && processedPositionData) {
     const pnlData = calculatePnL(processedTradeData, processedPositionData);
-    const tradeList = document.getElementById("trade-list");
     tradeList.innerHTML = '';
   
     pnlData.forEach((trade, index) => {
@@ -25,6 +26,7 @@ async function showPnL() {
       tradeList.appendChild(tradeItem);
     });
   }
+  showPnLTrue = true;
 }
 
 function calculatePnL(tradeData, positionData) {
