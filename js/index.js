@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      //localStorage.removeItem("pro-userToken");
+      localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
