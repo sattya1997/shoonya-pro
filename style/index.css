@@ -945,7 +945,7 @@ h1 {
   padding: 5px;
   z-index: 1000;
   border-radius: 5px;
-  opacity: 0.95;
+  opacity: 1;
   /* transition: all 0.2s ease-in-out; */
   left: 50%;
   transform: translateX(-50%)

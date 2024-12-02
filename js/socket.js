@@ -275,7 +275,7 @@ function createOrdersDataField(data) {
       showPopup(orderTag);
       window.addEventListener('click', () => {
         updatePopupPosition(orderTag);
-        updateNiftyTagPosition();
+        //updateNiftyTagPosition();
       });
     }
   });
@@ -360,7 +360,6 @@ document.addEventListener("click", (event) => {
   const ordersTag = document.getElementById("orders-tag");
   if (popup && !popup.contains(event.target) && !ordersTag.contains(event.target)) {
     popup.remove();
-    closeChart();
   }
 });
 
@@ -382,13 +381,45 @@ function closeChart() {
 function handleDetails(tokenId, left, top) {
   closeChart();
   const chartPopup = document.createElement("div");
+
+  chartPopup.innerHTML = ` <div class="drag-handle" style="padding: 1px; cursor: move; display: flex; justify-content: space-between;"> <span></span> <span class="close-modal" id='cls-btn-chart'></span> </div> <canvas id="stockChart" data-id="chart-${tokenId}"></canvas> `;
+
   chartPopup.id = "chart-popup";
-  chartPopup.innerHTML = `<canvas id="stockChart" data-id="chart-${tokenId}"></canvas>`;
   chartPopup.style.top = `${top}px`;
-  chartPopup.style.minWidth = '300px';
+  chartPopup.style.minWidth = '350px';
+  chartPopup.style.maxHeight = '180px'
   document.body.appendChild(chartPopup);
+  document.getElementById('cls-btn-chart').addEventListener("click", (event) => {
+    closeChart();
+  });
+  makeDraggable(chartPopup);
   getChartData(tokenId);
   updateNiftyTagPosition();
+}
+
+function makeDraggable(popup) {
+  let isDragging = false;
+  let startX, startY;
+  const header = popup.querySelector(".drag-handle");
+  if (!header) return;
+  header.style.cursor = "move";
+  header.addEventListener("mousedown", (event) => {
+    isDragging = true;
+    startX = event.clientX - popup.offsetLeft;
+    startY = event.clientY - popup.offsetTop;
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+  function onMouseMove(event) {
+    if (!isDragging) return;
+    popup.style.left = `${event.clientX - startX}px`;
+    popup.style.top = `${event.clientY - startY}px`;
+  }
+  function onMouseUp() {
+    isDragging = false;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }
 }
 
 async function getChartData(tokenId) {
