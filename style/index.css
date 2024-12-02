@@ -14,7 +14,7 @@ html {
 }
 
 body {
-  background-color: #1e1c1c;
+  background-color: #151b23;
   margin: 0;
 }
 
@@ -89,7 +89,7 @@ body {
 #search-input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #2a2a2a;
   border-radius: 4px;
   background-color: #17181d;
 }
@@ -222,6 +222,7 @@ body {
   background: #1e2021;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #2a2a2a;
   padding: 10px;
   margin: 10px;
   width: 300px;
@@ -321,8 +322,8 @@ label p {
   align-items: center;
   text-align: center;
   width: 70%;
-  background-color: #201f1f;
-  border: 1px solid #e1e1e1;
+  background-color: #151b23;
+  border: 1px solid #373737;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -532,17 +533,16 @@ h5 {
 }
 
 .single-order-list {
-  background-color: #141313;
+  background-color: #151b23;
   border: 0.5px solid #2d2929;
   border-radius: 4px;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(249, 146, 146, 0.1);
   padding: 5px;
   margin: 5px;
 }
 
 .single-order-list span {
-  color: white;
+  color: #d1d1d1;
 }
 
 .modify {
