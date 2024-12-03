@@ -75,7 +75,7 @@ async function searchScrip() {
                   <span>${item.exch}: ${item.tsym} - ${item.token}</span><br>
                   <span>
                     <button data-id="btn-buy-list-${item.token}" token="${item.token}" class="auto">Buy</button>
-                    <button class="search-list-btn" onclick="addTodetailsList('${item.token}')">Card</button>
+                    <button class="search-list-btn" onclick="addToDetailsList('${item.token}')">Card</button>
                     <button class="search-list-btn" onclick="addToTagList('${item.token}', '${item.tsym}')">Tag</button>
                     <button data-id="btn-sell-list-${item.token}" token="${item.token}" class="cancel">Sell</button>
                     <button style="background-color: #5bd3bb;"><a href="./chartPage.html?stockSymbol=${item.token}">Chart</a></button>
@@ -128,7 +128,7 @@ function addToTagList(token, name) {
   subscribeTouchline([`NSE|${token}`]);
 }
 
-function addTodetailsList(token) {
+function addToDetailsList(token) {
   stockTickers.push(token);
   const detailsData = getDetails(token);
 }
@@ -278,7 +278,7 @@ function createStockCard(data) {
     <div class="sub-info" id="${data.token}-price-info">
       <label><button data-id="btn-sell-${data.token}" token="${data.token}" class="cancel">Sell</button></label>
       <label style="color:${classValue};"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
-      <label style="color:blue"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
+      <label style="color:#7c73ff"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
       <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
       <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
       <label><p class="fontBolder">Last Trade Qty: </p><p id="${data.token}-ltq">${data.ltq}</p></label>
@@ -627,9 +627,9 @@ function updateOrderValue() {
       document.querySelector('input[name="quantity"]').style.color = "red";
       document.getElementById("order-value").style.color = "red";
     } else {
-      document.querySelector('input[name="limitPrice"]').style.color = "black";
-      document.querySelector('input[name="quantity"]').style.color = "black";
-      document.getElementById("order-value").style.color = "black";
+      document.querySelector('input[name="limitPrice"]').style.color = "whitesmoke";
+      document.querySelector('input[name="quantity"]').style.color = "whitesmoke";
+      document.getElementById("order-value").style.color = "whitesmoke";
     }
     return;
   } else {
@@ -641,9 +641,9 @@ function updateOrderValue() {
     document.querySelector('input[name="quantity"]').style.color = "red";
     document.getElementById("order-value").style.color = "red";
   } else {
-    document.querySelector('input[name="limitPrice"]').style.color = "black";
-    document.querySelector('input[name="quantity"]').style.color = "black";
-    document.getElementById("order-value").style.color = "black";
+    document.querySelector('input[name="limitPrice"]').style.color = "whitesmoke";
+    document.querySelector('input[name="quantity"]').style.color = "whitesmoke";
+    document.getElementById("order-value").style.color = "whitesmoke";
   }
 }
 
@@ -892,6 +892,25 @@ function getOrders() {
             generateOrderDetails(order, "other-order-list", otherOrderCount);
           }
         });
+
+        const totalPnLResults = calculateTotalPnL(orderDetailsForPnL);
+
+        if (totalPnLResults.length > 0) {
+          const positionElement = document.getElementById("position");
+          let string = '<ul>';
+          totalPnLResults.forEach(result => {
+            let token =  result.stock;
+            const element = document.querySelector(`[data-pos-id="${token}"]`);
+            const name = element.dataset.posTsym;
+            let pnl = result.totalPnL;
+            const color = pnl > 0 ? '#3aff7d':pnl < 0? '#ff0000': '#d2d2d2';
+            pnl = pnl > 0? `+${pnl}` : pnl
+            string = string + `
+              <li><span>${name}:</span><span style="color:${color}">${pnl}</span></li>
+            ` ;
+          });
+          positionElement.innerHTML = string;
+        }
       }
     })
     .catch((err) => {
@@ -902,7 +921,7 @@ function getOrders() {
 function updateOrderDeatilsForPnL(order, type) {
   var result = orderDetailsForPnL.find(function(item) { return item.stock === order.token; });
   if (!result && type === "buy") {
-    orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], sell:[], remaining: 0});
+    orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], sell:[], remaining: 0, remainingBuyQty: 0, remainingSellQty: 0});
   } else if (! result && type === "sell") {
     orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], buy:[], remaining: 0});
   } else if (result && type === "buy") {
@@ -929,7 +948,7 @@ function generateOrderDetails(order, id, count) {
     <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
     <label></label><span>${order.status}&nbsp;&nbsp;</span>
-    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
+    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}" data-pos-tsym="${order.tsym}">0</span>
   `;
   } else {
     singleOrder.innerHTML = `
@@ -996,6 +1015,10 @@ async function startAnalyze() {
 
 function stopAnalyze() {
   analyzeStart = false;
+  const newT = stockTickers.map((value) => {
+    return "NSE|" + value;
+  });
+  unsubscribeDepth(newT);
 }
 
 async function fetchTickerData() {
