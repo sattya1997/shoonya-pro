@@ -276,10 +276,6 @@ function createOrdersDataField(data) {
     const orderTag = event.target.closest(".order-tag");
     if (orderTag) {
       showPopup(orderTag);
-      window.addEventListener('click', () => {
-        updatePopupPosition(orderTag);
-        //updateNiftyTagPosition();
-      });
     }
   });
 }
@@ -299,12 +295,8 @@ function updateNiftyTagPosition() {
 function showPopup(orderTag) {
   const tokenId = orderTag.dataset.token;
   const name = orderTag.dataset.name;
-  
-  // Remove any existing popups
-  const existingPopup = document.getElementById("dynamic-popup");
-  if (existingPopup) {
-    existingPopup.remove();
-  }
+
+  closeDynamicPopup();
 
   // Create a new popup div
   const popup = document.createElement("div");
@@ -332,11 +324,9 @@ function showPopup(orderTag) {
   popup.style.left = `${left}px`;
   popup.style.top = `${rect.top - popup.offsetHeight}px`;
 
-  // Position the popup 
-  updatePopupPosition(orderTag);
-
   // Add the popup to the body
   document.body.appendChild(popup);
+  updatePopupPosition(orderTag);
 }
 
 function updatePopupPosition(orderTag) {
@@ -369,10 +359,19 @@ document.addEventListener("click", (event) => {
 
 function handleBuy(tokenId) {
   handleBuySellButtonClickFromResultsList(tokenId, "buy");
+  closeDynamicPopup();
+}
+
+function closeDynamicPopup() {
+  const existingPopup = document.getElementById("dynamic-popup");
+  if (existingPopup) {
+    existingPopup.remove();
+  }
 }
 
 function handleSell(tokenId) {
   handleBuySellButtonClickFromResultsList(tokenId, "sell");
+  closeDynamicPopup();
 }
 
 function closeChart() {
@@ -399,6 +398,7 @@ function handleDetails(tokenId, left, top) {
   makeDraggable(chartPopup);
   getChartData(tokenId);
   updateNiftyTagPosition();
+  closeDynamicPopup();
 }
 
 function makeDraggable(popup) {
