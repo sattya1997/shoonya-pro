@@ -414,6 +414,13 @@ function makeDraggable(popup) {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   });
+  header.addEventListener("touchstart", (event) => {
+    isDragging = true;
+    startX = event.touches[0].clientX - popup.offsetLeft;
+    startY = event.touches[0].clientY - popup.offsetTop;
+    document.addEventListener("touchmove", onMouseMoveTouch);
+    document.addEventListener("touchend", onMouseUpTouch);
+  });
   function onMouseMove(event) {
     if (!isDragging) return;
     popup.style.left = `${event.clientX - startX}px`;
@@ -421,8 +428,19 @@ function makeDraggable(popup) {
   }
   function onMouseUp() {
     isDragging = false;
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("touchmove", onMouseMove);
+    document.removeEventListener("touchend", onMouseUp);
+  }
+
+  function onMouseMoveTouch(event) {
+    if (!isDragging) return;
+    popup.style.left = `${event.touches[0].clientX - startX}px`;
+    popup.style.top = `${event.touches[0].clientY - startY}px`;
+  }
+  function onMouseUpTouch() {
+    isDragging = false;
+    document.removeEventListener("touchmove", onMouseMove);
+    document.removeEventListener("touchend", onMouseUp);
   }
 }
 

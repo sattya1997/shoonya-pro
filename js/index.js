@@ -224,7 +224,8 @@ function closeCard(token) {
 function createStockCard(data) {
   const detailsList = document.getElementById("details-list");
   const goToChartPage = document.createElement("div");
-  goToChartPage.innerHTML = `<a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}">Chart</a>`;
+  goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}"><img src="./icons/stockChart.png"></a>`;
+  goToChartPage.id = "card-header-btns";
   const cardCloseBtn = document.createElement("div");
   cardCloseBtn.classList.add("close-modal");
   cardCloseBtn.addEventListener("click", () => {
@@ -1024,18 +1025,20 @@ function getOrders() {
 }
 
 function updateOrderDeatilsForPnL(order, type) {
-  var result = orderDetailsForPnL.find(function(item) { return item.stock === order.token; });
-  if (!result && type === "buy") {
-    orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcc? order.avgprc: order.prc}], sell:[], remaining: 0, remainingBuyQty: 0, remainingSellQty: 0});
-  } else if (! result && type === "sell") {
-    orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprc ? order.avgprc: order.prc}], buy:[], remaining: 0});
-  } else if (result && type === "buy") {
-    result.buy.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
-    result.remaining = parseInt(result.remaining) + parseInt(order.qty);
+  if (order.status === "COMPLETE") {
+    var result = orderDetailsForPnL.find(function(item) { return item.stock === order.token; });
+    if (!result && type === "buy") {
+      orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcc? order.avgprc: order.prc}], sell:[], remaining: 0, remainingBuyQty: 0, remainingSellQty: 0});
+    } else if (! result && type === "sell") {
+      orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprc ? order.avgprc: order.prc}], buy:[], remaining: 0});
+    } else if (result && type === "buy") {
+      result.buy.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
+      result.remaining = parseInt(result.remaining) + parseInt(order.qty);
 
-  } else if (result && type === "sell") {
-    result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
-    result.remaining = parseInt(result.remaining) + parseInt(order.qty);
+    } else if (result && type === "sell") {
+      result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
+      result.remaining = parseInt(result.remaining) + parseInt(order.qty);
+    }
   }
 }
 
@@ -1210,3 +1213,71 @@ searchInput.addEventListener("keyup", function (event) {
     }, 500);
   }
 });
+
+
+function makeElementDraggable(draggableElement, handleElement) {
+  let isDragging = false;
+  let startX, startY, initialX, initialY;
+
+  handleElement.addEventListener('mousedown', startDrag);
+  handleElement.addEventListener('touchstart', startDrag);
+
+  function startDrag(e) {
+    e.preventDefault();
+    isDragging = true;
+    if (e.type === "touchstart") {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    } else {
+      startX = e.clientX;
+      startY = e.clientY;
+    }
+    initialX = draggableElement.offsetLeft;
+    initialY = draggableElement.offsetTop;
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', dragTouch);
+    document.addEventListener('touchend', stopDrag);
+  }
+
+  function drag(e) {
+    e.preventDefault();
+    if (isDragging) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      draggableElement.style.left = initialX + dx + 'px';
+      draggableElement.style.top = initialY + dy + 'px';
+    }
+  }
+
+  function stopDrag() {
+    isDragging = false;
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', drag);
+    document.removeEventListener('touchend', stopDrag);
+  }
+
+  function dragTouch(e) {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    draggableElement.style.left = initialX + dx + "px";
+    draggableElement.style.top = initialY + dy + "px";
+  }
+}
+
+function callCardDraggable(token, event) {
+  const rect = event.getBoundingClientRect();
+  const cardElement = document.getElementById('card-'+token);
+  cardElement.style.position = "absolute";
+  cardElement.style.top = `${window.scrollY + rect.top - 50}px`;
+  cardElement.style.left = `${window.scrollX + rect.left}px`;
+  cardElement.style.zIndex = "500";
+  const headerElement = cardElement.querySelector('.card-header');
+  headerElement.style.color = "#4757f4";
+  headerElement.style.backgroundColor = "#1e2320";
+  headerElement.style.borderRadius = "5px";
+  headerElement.style.cursor = "pointer";
+  makeElementDraggable(cardElement, headerElement);
+}

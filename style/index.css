@@ -231,16 +231,6 @@ body {
   width: 300px;
 }
 
-.card a {
-  text-decoration: none;
-  background-color: #16a085;
-  color: whitesmoke;
-  padding: 2px 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-}
-
 .card button {
   font-size: 12px;
   padding: 1px 10px;
@@ -1207,4 +1197,28 @@ h5 {
   background-color: #616161;
   border-radius: 3px;
   margin: 5px 5px
+}
+
+#card-header-btns {
+  display: flex;
+  justify-content: space-between;
+  border-radius: 5px;
+} 
+
+#card-header-btns img {
+  border-radius: 5px;
+  padding: 2px 4px;
+  background-color: rgb(39 61 95);
+  width: 18px;
+  transition: all 0.3s ease;
+}
+
+#card-header-btns img i :hover {
+  transition: all 0.3s ease;
+  width: 25px;
+}
+
+#card-header-btns button {
+  width: auto;
+  background-color: #00000000;
 }
