@@ -224,7 +224,8 @@ function closeCard(token) {
 function createStockCard(data) {
   const detailsList = document.getElementById("details-list");
   const goToChartPage = document.createElement("div");
-  goToChartPage.innerHTML = `<a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}">Chart</a>`;
+  goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}"><img src="./icons/stockChart.png"></a>`;
+  goToChartPage.id = "card-header-btns";
   const cardCloseBtn = document.createElement("div");
   cardCloseBtn.classList.add("close-modal");
   cardCloseBtn.addEventListener("click", () => {
@@ -1210,3 +1211,52 @@ searchInput.addEventListener("keyup", function (event) {
     }, 500);
   }
 });
+
+
+function makeElementDraggable(draggableElement, handleElement) {
+  let isDragging = false;
+  let startX, startY, initialX, initialY;
+
+  handleElement.addEventListener('mousedown', startDrag);
+
+  function startDrag(e) {
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    initialX = draggableElement.offsetLeft;
+    initialY = draggableElement.offsetTop;
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDrag);
+  }
+
+  function drag(e) {
+    if (isDragging) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      console.log(draggableElement);
+      draggableElement.style.left = initialX + dx + 'px';
+      draggableElement.style.top = initialY + dy + 'px';
+    }
+  }
+
+  function stopDrag() {
+    isDragging = false;
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', stopDrag);
+  }
+}
+
+function callCardDraggable(token, event) {
+  const rect = event.getBoundingClientRect();
+  const cardElement = document.getElementById('card-'+token);
+  cardElement.style.position = "absolute";
+  cardElement.style.top = `${window.scrollY + rect.top - 50}px`;
+  cardElement.style.left = `${window.scrollX + rect.left}px`;
+  cardElement.style.zIndex = "500";
+  const headerElement = cardElement.querySelector('.card-header');
+  headerElement.style.color = "#4757f4";
+  headerElement.style.backgroundColor = "#1e2320";
+  headerElement.style.borderRadius = "5px";
+  headerElement.style.cursor = "pointer";
+  makeElementDraggable(cardElement, headerElement);
+}
