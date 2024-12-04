@@ -106,9 +106,16 @@ function connectWebSocket() {
 }
 
 function updateOrderPos(data) {
-  const curPrice = data.lp;
+  const curPrice = parseFloat(data.lp);
   const token = data.tk;
   const elements = document.querySelectorAll(`[data-pos-id="${token}"]`);
+  let result = orderDetailsForPnL.find((item) => item.stock === token);
+  if (!result) return;
+  let totalSellQty = result.sell.reduce((total, sell) => total + parseFloat(sell.qty), 0);
+  let totalBuyQty = result.buy.reduce((total, buy) => total + parseFloat(buy.qty), 0);
+  result.remaining = totalBuyQty;
+  result.remainingBuyQty = totalBuyQty;
+  result.remainingSellQty = totalSellQty;
   if (!elements || !data.lp) return;
   elements.forEach((element) => {
     if (element.dataset.posStatus === "DONE") return;
@@ -116,44 +123,40 @@ function updateOrderPos(data) {
     const posQty = parseFloat(element.dataset.posQty);
     const type = element.dataset.posType;
     const status = element.dataset.posStatus;
-    let pos = parseFloat(curPrice * posQty - posPrc * posQty).toFixed(2);
-    let result = orderDetailsForPnL.find((item) => item.stock === token);
-    if (!result) return;
-    let totalSellQty = result.sell.reduce(
-      (total, sell) => total + parseFloat(sell.qty),
-      0
-    );
-    let totalBuyQty = result.buy.reduce((total, buy) => total + parseFloat(buy.qty), 0);
-    result.remaining -= posQty;
-    if ((type === "B" && status === "COMPLETE" && totalBuyQty === totalSellQty) || (type === "B" && status === "COMPLETE" && result.remaining > 0)) {
+    let pos = parseFloat((curPrice * posQty) - (posPrc * posQty)).toFixed(2);
+
+    if (type === "B" && status === "COMPLETE" && totalBuyQty === totalSellQty) {
       element.dataset.posStatus = "DONE";
       element.innerText = "Done";
       element.style.color = "green";
       return;
     }
-    if ((type === "S" && status === "OPEN") || (type === "B" && status === "COMPLETE")) {
-      if (type === "B" && result.remaining > 0) {
-        pos = parseFloat(result.remaining * curPrice - parseFloat(element.dataset.posRb)).toFixed(2);
-      }
+
+    if (type === "B" && status === "COMPLETE" && totalBuyQty > totalSellQty && (result.remainingBuyQty - totalSellQty) > 0 && result.remainingSellQty > 0) {
+      element.dataset.posStatus = "DONE";
+      element.innerText = "Done";
+      element.style.color = "green";
+      result.remainingBuyQty = result.remainingBuyQty - posQty;
+      result.remainingSellQty = result.remainingSellQty - posQty;
+      return;
+    }
+    if (type === "B" && status === "COMPLETE") {
       element.innerText = pos > 0 ? `+${pos}` : pos;
       element.style.color = pos > 0 ? "green" : "red";
+      result.remainingBuyQty - posQty;
     }
     if (type === "S" && status === "COMPLETE") {
       element.dataset.posStatus = "DONE";
       let remainingQty = posQty;
-      let total = 0;
-      result.buy.forEach((buy, index) => {
+      let totalBuyPriceForThisStock = result.buy.reduce((total, buy) => {
         if (buy.status === "COMPLETE" && remainingQty > 0) {
           total += buy.prc * Math.min(parseFloat(buy.qty), remainingQty);
           remainingQty -= buy.qty;
-          if (buy.qty <= posQty) {
-            delete result.buy[index];
-          } else {
-            result.buy.qty = (parseFloat(result.buy.qty) - posQty).toString();
-          }
         }
-      });
-      pos = parseFloat(posPrc * posQty - total).toFixed(2);
+        return total;
+      }, 0);
+
+      pos = parseFloat(posPrc * posQty - totalBuyPriceForThisStock).toFixed(2);
       element.innerText = pos > 0 ? `+${pos}` : pos;
       element.style.color = pos > 0 ? "green" : "red";
     }
@@ -234,7 +237,7 @@ function createNiftyDataField(data) {
     }
 
     niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
-    niftyTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : "#d00505";
+    niftyTag.style.backgroundColor = parseFloat(data.pc) >= 0 ? "#77d677" : "#f46c6c";
   }
 }
 
@@ -258,7 +261,7 @@ function createOrdersDataField(data) {
       `;
     }
     orderTag = ordersTag.querySelector("#order-" + data.tk);
-    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#009201" : parseFloat(data.pc) < 0 ? "#d00505" : "#938662";
+    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#77d677" : parseFloat(data.pc) < 0 ? "#f46c6c" : "#938662";
   }
 
   if (isStoreDepth) {
@@ -313,6 +316,7 @@ function showPopup(orderTag) {
     <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
     <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
     <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
+    <button style="background-color: #9e5fa9;" onclick="addToDetailsList('${tokenId}')">Card</button>
   `;
 
   // Position the popup
@@ -478,6 +482,7 @@ function createGraph(graphData) {
           borderColor: "white",
           borderWidth: .7,
           fill: true,
+          backgroundColor: "#6185cf",
           pointRadius: 0,
         },
       ],
@@ -847,5 +852,34 @@ function refreshCardData(data) {
     const newQuantity = quantity !== null ? quantity : currentQuantity;
     element.innerText = `${newPrice} × ${newQuantity}`.trim();
   };
-  
+}
+
+function calculateTotalPnL(orderDetailsForPnL) {
+  return orderDetailsForPnL.map(stock => {
+    let buyOrders = stock.buy.map(buyOrder => ({ ...buyOrder })); // Deep copy buy orders
+    let totalPnL = 0;
+
+    stock.sell.forEach(sellOrder => {
+      let sellQty = parseInt(sellOrder.qty);
+      while (sellQty > 0 && buyOrders.length > 0) {
+        let buyOrder = buyOrders[0];
+        let buyQty = parseInt(buyOrder.qty);
+        let qtyMatched = Math.min(sellQty, buyQty);
+        
+        let pnl = (parseFloat(sellOrder.prc) - parseFloat(buyOrder.prc)) * qtyMatched;
+        totalPnL += pnl;
+
+        // Adjust quantities
+        sellQty -= qtyMatched;
+        buyOrder.qty -= qtyMatched;
+
+        // Remove buy order if fully matched
+        if (buyOrder.qty === 0) {
+          buyOrders.shift();
+        }
+      }
+    });
+
+    return { stock: stock.stock, totalPnL: totalPnL.toFixed(2) };
+  });
 }

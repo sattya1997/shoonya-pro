@@ -48,6 +48,11 @@ function closeOrderPlaceForm() {
     .addEventListener("click", placeBlankOrder);
 }
 
+function closeOrderPlaceFormForUpdate() {
+  const orderForm = document.getElementById("dynamic-popup-order").closest("div");
+  orderForm.remove();
+}
+
 async function searchScrip() {
   const searchInput = document.getElementById("search-input");
 
@@ -75,7 +80,7 @@ async function searchScrip() {
                   <span>${item.exch}: ${item.tsym} - ${item.token}</span><br>
                   <span>
                     <button data-id="btn-buy-list-${item.token}" token="${item.token}" class="auto">Buy</button>
-                    <button class="search-list-btn" onclick="addTodetailsList('${item.token}')">Card</button>
+                    <button class="search-list-btn" onclick="addToDetailsList('${item.token}')">Card</button>
                     <button class="search-list-btn" onclick="addToTagList('${item.token}', '${item.tsym}')">Tag</button>
                     <button data-id="btn-sell-list-${item.token}" token="${item.token}" class="cancel">Sell</button>
                     <button style="background-color: #5bd3bb;"><a href="./chartPage.html?stockSymbol=${item.token}">Chart</a></button>
@@ -128,7 +133,7 @@ function addToTagList(token, name) {
   subscribeTouchline([`NSE|${token}`]);
 }
 
-function addTodetailsList(token) {
+function addToDetailsList(token) {
   stockTickers.push(token);
   const detailsData = getDetails(token);
 }
@@ -278,7 +283,7 @@ function createStockCard(data) {
     <div class="sub-info" id="${data.token}-price-info">
       <label><button data-id="btn-sell-${data.token}" token="${data.token}" class="cancel">Sell</button></label>
       <label style="color:${classValue};"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
-      <label style="color:blue"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
+      <label style="color:#7c73ff"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
       <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
       <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
       <label><p class="fontBolder">Last Trade Qty: </p><p id="${data.token}-ltq">${data.ltq}</p></label>
@@ -505,7 +510,8 @@ function createPlaceOrderForm(data, orderType) {
   const newOrderType =
     orderType === "buy" ? "B" : orderType === "sell" ? "S" : "B";
   let curPrice = parseFloat(data["lp"]);
-  curPrice += orderType === "buy" ? -(curPrice / 50) : curPrice / 50;
+  curPrice += orderType === "buy" ? -(curPrice / 300) : curPrice / 300;
+  //curPrice += orderType === "buy" ? -(curPrice / 150) : curPrice / 150;
 
   const placeOrderListDiv = document.getElementById("place-order-list");
   placeOrderListDiv.innerHTML = `
@@ -627,9 +633,9 @@ function updateOrderValue() {
       document.querySelector('input[name="quantity"]').style.color = "red";
       document.getElementById("order-value").style.color = "red";
     } else {
-      document.querySelector('input[name="limitPrice"]').style.color = "black";
-      document.querySelector('input[name="quantity"]').style.color = "black";
-      document.getElementById("order-value").style.color = "black";
+      document.querySelector('input[name="limitPrice"]').style.color = "whitesmoke";
+      document.querySelector('input[name="quantity"]').style.color = "whitesmoke";
+      document.getElementById("order-value").style.color = "whitesmoke";
     }
     return;
   } else {
@@ -641,13 +647,105 @@ function updateOrderValue() {
     document.querySelector('input[name="quantity"]').style.color = "red";
     document.getElementById("order-value").style.color = "red";
   } else {
-    document.querySelector('input[name="limitPrice"]').style.color = "black";
-    document.querySelector('input[name="quantity"]').style.color = "black";
-    document.getElementById("order-value").style.color = "black";
+    document.querySelector('input[name="limitPrice"]').style.color = "whitesmoke";
+    document.querySelector('input[name="quantity"]').style.color = "whitesmoke";
+    document.getElementById("order-value").style.color = "whitesmoke";
   }
 }
 
-function createModifiedPlaceOrderForm(jData) {
+function createModifiedPlaceOrderForm(jData, event) {
+  const updateOrderpopup = document.createElement("div");
+  updateOrderpopup.id = "dynamic-popup-order";
+  updateOrderpopup.innerHTML = `
+    <div id="place-order-list-update" class="place-order-list-update">
+      <span class="close-modal" id="close-order-form-popup"></span>
+      <form id="place-order-form-update">
+        <div id="modified-order-item"></div>
+        <div id="place-order-update-top-label">
+          <label>Cash Balance: <span id="cash-balance"></span></label>
+          <label>Order Value: <span id="order-value"></span></label>
+        </div>
+        <label>Quantity:
+          <input type="number" name="quantity" value="${jData["qty"]}" min="1">
+        </label>
+        <label>Limit Price:
+          <input type="number" name="limitPrice" value="${jData["prc"]}" min="0" step="0.01">
+        </label>
+        <input type="hidden" name="token" value="${jData["token"]}">
+        <button type="submit">Submit Order</button>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(updateOrderpopup);
+  console.log();
+  updateOrderpopup.style.top = `${document.documentElement.scrollTop + updateOrderpopup.offsetHeight}px`;
+  oldOrderValue = parseFloat(jData["qty"]) * parseFloat(jData["prc"]);
+
+  document.getElementById("cash-balance").textContent =
+    parseFloat(cashAvailable).toFixed(2);
+  document
+    .querySelector('input[name="quantity"]')
+    .addEventListener("input", updateOrderValue);
+  document
+    .querySelector('input[name="limitPrice"]')
+    .addEventListener("input", updateOrderValue);
+  updateOrderValue();
+  document
+    .getElementById("place-order-form-update")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const quantity = formData.get("quantity");
+      const limitPrice = formData.get("limitPrice");
+      const token = formData.get("token");
+
+      jData["qty"] = quantity.toString();
+      jData["prc"] = limitPrice.toString();
+      const jKey = userToken;
+      const balance = document.getElementById("cash-balance").textContent;
+      if (balance && parseFloat(balance) < 0) {
+        alert("Warning: Order value exceeds cash balance!");
+        return;
+      }
+      postRequest("modifyorder", jData, jKey)
+        .then((res) => {
+          const msgElement = document.getElementById("msg");
+          if (res.data && res.data.stat && res.data.stat === "Ok") {
+            msgElement.innerHTML = "Success";
+            msgElement.style.opacity = "1";
+            setTimeout(() => {
+              msgElement.style.opacity = "1";
+            }, 1500);
+            setTimeout(() => {
+              msgElement.style.opacity = "0";
+            }, 1500);
+
+            getOrders();
+          } else {
+            msgElement.innerHTML = "Could not modify...";
+            msgElement.style.backgroundColor = "#e88888";
+            msgElement.style.opacity = "1";
+            setTimeout(() => {
+              msgElement.style.opacity = "1";
+            }, 1500);
+            updateOrderValue();
+            setTimeout(() => {
+              msgElement.style.opacity = "0";
+            }, 1500);
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+
+  document
+    .getElementById("close-order-form-popup")
+    .addEventListener("click", closeOrderPlaceFormForUpdate);
+}
+
+function createModifiedPlaceOrderFormTop(jData) {
   const placeOrderListDiv = document.getElementById("place-order-list");
   placeOrderListDiv.innerHTML = `
       <span class="close-modal" id="close-order-form"></span>
@@ -782,7 +880,13 @@ function modifyOrder(modifyType, buttonElement) {
     jData["prc"] = prc;
     jData["ret"] = "DAY";
     jData["trantype"] = parentElement.getAttribute("trantype");
-    createModifiedPlaceOrderForm(jData);
+    const olderObject = document.getElementById("dynamic-popup-order")
+
+    createModifiedPlaceOrderFormTop(jData);
+    if (olderObject) {
+      return;
+    }
+    createModifiedPlaceOrderForm(jData, buttonElement);
   }
 
   if (response) {
@@ -846,6 +950,7 @@ function getOrders() {
       var otherOrderCount = 0;
 
       if (data && data.stat !== "Not_Ok") {
+        orderDetailsForPnL = [];
         data.reverse().forEach((order) => {
           if (
             order.stat === "Ok" &&
@@ -892,6 +997,26 @@ function getOrders() {
             generateOrderDetails(order, "other-order-list", otherOrderCount);
           }
         });
+
+        const totalPnLResults = calculateTotalPnL(orderDetailsForPnL);
+        // console.log('update-orders');
+        // console.log(orderDetailsForPnL);
+        if (totalPnLResults.length > 0) {
+          const positionElement = document.getElementById("position");
+          let string = '<ul>';
+          totalPnLResults.forEach(result => {
+            let token =  result.stock;
+            const element = document.querySelector(`[data-pos-id="${token}"]`);
+            const name = element.dataset.posTsym;
+            let pnl = result.totalPnL;
+            const color = pnl > 0 ? '#3aff7d':pnl < 0? '#ff0000': '#d2d2d2';
+            pnl = pnl > 0? `+${pnl}` : pnl
+            string = string + `
+              <li><span>${name}:</span><span style="color:${color}">${pnl}</span></li>
+            ` ;
+          });
+          positionElement.innerHTML = string;
+        }
       }
     })
     .catch((err) => {
@@ -902,17 +1027,18 @@ function getOrders() {
 function updateOrderDeatilsForPnL(order, type) {
   var result = orderDetailsForPnL.find(function(item) { return item.stock === order.token; });
   if (!result && type === "buy") {
-    orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], sell:[], remaining: 0});
+    orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcc? order.avgprc: order.prc}], sell:[], remaining: 0, remainingBuyQty: 0, remainingSellQty: 0});
   } else if (! result && type === "sell") {
-    orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc}], buy:[], remaining: 0});
+    orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprc ? order.avgprc: order.prc}], buy:[], remaining: 0});
   } else if (result && type === "buy") {
-    result.buy.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc});
+    result.buy.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
     result.remaining = parseInt(result.remaining) + parseInt(order.qty);
 
   } else if (result && type === "sell") {
-    result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.prc});
+    result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
     result.remaining = parseInt(result.remaining) + parseInt(order.qty);
   }
+  //console.log(orderDetailsForPnL);
 }
 
 function generateOrderDetails(order, id, count) {
@@ -929,16 +1055,16 @@ function generateOrderDetails(order, id, count) {
     <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
     <label></label><span>${order.status}&nbsp;&nbsp;</span>
-    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
+    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}" data-pos-tsym="${order.tsym}">0</span>
   `;
   } else {
     singleOrder.innerHTML = `
     <label>No. ${count}.&nbsp;</label>
     <span>${order.tsym}&nbsp;&nbsp;</span>
-    <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
+    <label>Order price:&nbsp</label><span>${order.avgprc ? order.avgprc: order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
     <label></label><span>${order.status}&nbsp;&nbsp;</span>
-    <label>Pos:&nbsp</label><span data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
+    <label>Pos:&nbsp</label><span data-pos-prc="${order.avgprc ? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
   `;
   }
 
@@ -996,6 +1122,10 @@ async function startAnalyze() {
 
 function stopAnalyze() {
   analyzeStart = false;
+  const newT = stockTickers.map((value) => {
+    return "NSE|" + value;
+  });
+  unsubscribeDepth(newT);
 }
 
 async function fetchTickerData() {
