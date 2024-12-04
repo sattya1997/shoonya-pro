@@ -134,6 +134,7 @@ function addToTagList(token, name) {
 }
 
 function addToDetailsList(token) {
+  closeDynamicPopup();
   stockTickers.push(token);
   const detailsData = getDetails(token);
 }
