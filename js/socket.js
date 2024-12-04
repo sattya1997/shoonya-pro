@@ -276,10 +276,10 @@ function createOrdersDataField(data) {
     const orderTag = event.target.closest(".order-tag");
     if (orderTag) {
       showPopup(orderTag);
-      window.addEventListener('click', () => {
-        updatePopupPosition(orderTag);
-        //updateNiftyTagPosition();
-      });
+      // window.addEventListener('click', () => {
+      //   updatePopupPosition(orderTag);
+      //   //updateNiftyTagPosition();
+      // });
     }
   });
 }
@@ -332,11 +332,9 @@ function showPopup(orderTag) {
   popup.style.left = `${left}px`;
   popup.style.top = `${rect.top - popup.offsetHeight}px`;
 
-  // Position the popup 
-  updatePopupPosition(orderTag);
-
   // Add the popup to the body
   document.body.appendChild(popup);
+  updatePopupPosition(orderTag);
 }
 
 function updatePopupPosition(orderTag) {

@@ -999,8 +999,6 @@ function getOrders() {
         });
 
         const totalPnLResults = calculateTotalPnL(orderDetailsForPnL);
-        // console.log('update-orders');
-        // console.log(orderDetailsForPnL);
         if (totalPnLResults.length > 0) {
           const positionElement = document.getElementById("position");
           let string = '<ul>';
@@ -1038,7 +1036,6 @@ function updateOrderDeatilsForPnL(order, type) {
     result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
     result.remaining = parseInt(result.remaining) + parseInt(order.qty);
   }
-  //console.log(orderDetailsForPnL);
 }
 
 function generateOrderDetails(order, id, count) {
@@ -1212,41 +1209,3 @@ searchInput.addEventListener("keyup", function (event) {
     }, 500);
   }
 });
-
-//getPosition();
-
-function getPosition() {
-  const jData = {
-    uid: uid,
-    actid: uid,
-  };
-  const jKey = userToken;
-
-  const res = postRequest("tradebook", jData, jKey);
-  res
-    .then((response) => {
-      const detailsData = response.data;
-      console.log(detailsData);
-      if (detailsData) {
-        showPosition(detailsData);
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-}
-
-function showPosition(data) {
-  const stockPositions = document.getElementById("stock-positions");
-  data.forEach((stock) => {
-    const stockItem = document.createElement("div");
-    stockItem.className = "stock-item";
-    stockItem.innerHTML = ` <div class="stock-name">${stock.tsym}</div>
-      <div class="stock-details">Qty: ${stock.qty}</div>
-      <div class="stock-details">Qty dn: ${stock.fillshares}</div>
-      <div class="stock-details">Price: ${stock.avgprc}</div>
-      <div class="stock-details">Price: ${stock.avgprc}</div>
-    `;
-    stockPositions.appendChild(stockItem);
-  });
-}
