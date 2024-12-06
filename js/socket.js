@@ -168,7 +168,7 @@ function updateGraph(data) {
     const formattedTime = `${hours}:${minutes}`;
 
     times.push(formattedTime);
-    prices.push('24800');
+    prices.push(data.lp);
     chart.data.labels = times;
     chart.data.datasets[0].data = prices;
     chart.update();
