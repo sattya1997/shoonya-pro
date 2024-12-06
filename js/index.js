@@ -522,6 +522,7 @@ function createPlaceOrderForm(data, orderType) {
           <div id="place-order-top-label">
             <label>Cash Balance: <span id="cash-balance"></span></label>
             <label>Order Value: <span id="order-value"></span></label>
+            <label>LTP: <span class="order-ltp-${data.token}"></span></label>
           </div>
           <p>${data["tsym"]}</p>
           <label>Qty:
@@ -666,6 +667,7 @@ function createModifiedPlaceOrderForm(jData, event) {
         <div id="place-order-update-top-label">
           <label>Cash Balance: <span id="cash-balance"></span></label>
           <label>Order Value: <span id="order-value"></span></label>
+          <label>LTP: <span class="order-ltp-${jData["token"]}"></span></label>
         </div>
         <label>Quantity:
           <input type="number" name="quantity" value="${jData["qty"]}" min="1">
@@ -680,7 +682,6 @@ function createModifiedPlaceOrderForm(jData, event) {
   `;
 
   document.body.appendChild(updateOrderpopup);
-  console.log();
   updateOrderpopup.style.top = `${document.documentElement.scrollTop + updateOrderpopup.offsetHeight}px`;
   oldOrderValue = parseFloat(jData["qty"]) * parseFloat(jData["prc"]);
 
@@ -756,6 +757,7 @@ function createModifiedPlaceOrderFormTop(jData) {
           <div id="place-order-top-label">
             <label>Cash Balance: <span id="cash-balance"></span></label>
             <label>Order Value: <span id="order-value"></span></label>
+            <label>LTP: <span class="order-ltp-${jData["token"]}"></span></label>
           </div>
           <label>Quantity:
             <input type="number" name="quantity" value="${jData["qty"]}" min="1">
@@ -876,6 +878,7 @@ function modifyOrder(modifyType, buttonElement) {
   if (modifyType === 2) {
     var prc = parseFloat(parentElement.getAttribute("prc"));
     jData["tsym"] = parentElement.getAttribute("tsym");
+    jData["token"] = parentElement.getAttribute("token");
     jData["qty"] = parentElement.getAttribute("qty");
     jData["exch"] = "NSE";
     jData["prctyp"] = "LMT";
@@ -1066,7 +1069,7 @@ function generateOrderDetails(order, id, count) {
     <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc || order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}" data-pos-tsym="${order.tsym}">0</span>
     ${id !== "other-order-list" ? `
       <br>
-      <div norenordno="${order.norenordno}" prc="${order.prc}" tsym="${order.tsym}" qty="${order.qty}" trantype="${order.trantype}">
+      <div norenordno="${order.norenordno}" prc="${order.prc}" tsym="${order.tsym}" qty="${order.qty}" trantype="${order.trantype}" token="${order.token}">
         <button class="auto" onclick="modifyOrder(1, this)">--</button>
         <button class="modify" onclick="modifyOrder(2, this)">Modify</button>
         <button class="cancel" onclick="modifyOrder(3, this)">Cancel</button>
