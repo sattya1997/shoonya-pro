@@ -1026,72 +1026,68 @@ function getOrders() {
 
 function updateOrderDeatilsForPnL(order, type) {
   if (order.status === "COMPLETE") {
-    var result = orderDetailsForPnL.find(function(item) { return item.stock === order.token; });
-    if (!result && type === "buy") {
-      orderDetailsForPnL.push({stock:order.token, buy:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcc? order.avgprc: order.prc}], sell:[], remaining: 0, remainingBuyQty: 0, remainingSellQty: 0});
-    } else if (! result && type === "sell") {
-      orderDetailsForPnL.push({stock:order.token, sell:[{status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprc ? order.avgprc: order.prc}], buy:[], remaining: 0});
-    } else if (result && type === "buy") {
-      result.buy.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
-      result.remaining = parseInt(result.remaining) + parseInt(order.qty);
-
-    } else if (result && type === "sell") {
-      result.sell.push({status:order.status, orderNo:order.norenordno, qty: order.qty, prc: order.avgprcv? order.avgprc: order.prc});
-      result.remaining = parseInt(result.remaining) + parseInt(order.qty);
+    let result = orderDetailsForPnL.find(item => item.stock === order.token);
+    const orderDetails = {
+      status: order.status,
+      orderNo: order.norenordno,
+      qty: parseInt(order.qty, 10),
+      prc: order.avgprc || order.prc
+    };
+    
+    if (!result) {
+      result = {
+        stock: order.token,
+        buy: type === "buy" ? [orderDetails] : [],
+        sell: type === "sell" ? [orderDetails] : [],
+        remaining: 0,
+        remainingBuyQty: 0,
+        remainingSellQty: 0
+      };
+      orderDetailsForPnL.push(result);
+    } else {
+      result[type].push(orderDetails);
+      result.remaining += orderDetails.qty;
     }
   }
 }
 
 function generateOrderDetails(order, id, count) {
   const list = document.getElementById(id);
-  singleOrder = document.createElement("div");
+  const singleOrder = document.createElement("div");
   singleOrder.classList.add("single-order-list");
-  if (order.token === "628") {
-  }
 
-  if (order.status === "COMPLETE" || order.status === "OPEN" ) {
-    singleOrder.innerHTML = `
-    <label>No. ${count}.&nbsp;</label>
-    <span>${order.tsym}&nbsp;&nbsp;</span>
-    <label>Order price:&nbsp</label><span>${order.prc}&nbsp;&nbsp;</span>
+  singleOrder.innerHTML = `
+    <label>${count}.&nbsp;</label>
+    <span>${order.tsym.split('-')[0]}&nbsp;&nbsp;</span>
+    <label></label><span>${order.avgprc || order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
-    <label></label><span>${order.status}&nbsp;&nbsp;</span>
-    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}" data-pos-tsym="${order.tsym}">0</span>
+    <label>LTP:&nbsp;</label><span id ="ltp">&nbsp;&nbsp;</span>
+    <label></label><span>${order.status == "COMPLETE" ? 'Dn' : "Opn"}&nbsp;&nbsp;</span>
+    <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc || order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}" data-pos-tsym="${order.tsym}">0</span>
+    ${id !== "other-order-list" ? `
+      <br>
+      <div norenordno="${order.norenordno}" prc="${order.prc}" tsym="${order.tsym}" qty="${order.qty}" trantype="${order.trantype}">
+        <button class="auto" onclick="modifyOrder(1, this)">--</button>
+        <button class="modify" onclick="modifyOrder(2, this)">Modify</button>
+        <button class="cancel" onclick="modifyOrder(3, this)">Cancel</button>
+        <button class="auto" onclick="modifyOrder(4, this)">Auto</button>
+        <button class="cancel" onclick="modifyOrder(5, this)">++</button>
+        <button class="cancel" onclick="modifyOrder(6, this)">Fry</button>
+      </div>
+    ` : ''}
   `;
-  } else {
-    singleOrder.innerHTML = `
-    <label>No. ${count}.&nbsp;</label>
-    <span>${order.tsym}&nbsp;&nbsp;</span>
-    <label>Order price:&nbsp</label><span>${order.avgprc ? order.avgprc: order.prc}&nbsp;&nbsp;</span>
-    <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
-    <label></label><span>${order.status}&nbsp;&nbsp;</span>
-    <label>Pos:&nbsp</label><span data-pos-prc="${order.avgprc ? order.avgprc: order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}">0</span>
-  `;
-  }
 
-
-  if (id != "other-order-list") {
-    singleOrder.innerHTML += `<br><div norenordno="${order.norenordno}" prc="${order.prc}" tsym="${order.tsym}" qty="${order.qty}" trantype="${order.trantype}"><button class="auto" onclick="modifyOrder(1, this)">--</button><button class="modify" onclick="modifyOrder(2, this)">Modify</button><button class="cancel" onclick="modifyOrder(3, this)">Cancel</button><button class="auto" onclick="modifyOrder(4, this)">Auto</button><button class="cancel" onclick="modifyOrder(5, this)">++</button><button class="cancel" onclick="modifyOrder(6, this)">Fry</button></div>`;
+  if (id !== "other-order-list") {
     const buttons = singleOrder.querySelectorAll("button");
-    var disabled = order.status != "OPEN" ? true : false;
-
-    if (disabled) {
-      buttons.forEach((button) => {
-        button.disabled = disabled;
-        button.classList.add("disabled-button");
-      });
-    }
+    const disabled = order.status !== "OPEN";
+    buttons.forEach(button => {
+      button.disabled = disabled;
+      if (disabled) button.classList.add("disabled-button");
+    });
   }
 
   if (count === 1) {
-    list.innerHTML = "";
-    if (id === "buy-order-list") {
-      list.innerHTML = "<h5>Buy orders:</h5>";
-    } else if (id === "sell-order-list") {
-      list.innerHTML = "<h5>Sell orders:</h5>";
-    } else {
-      list.innerHTML = "<h5>Other orders:</h5>";
-    }
+    list.innerHTML = id === "buy-order-list" ? "<h5>Buy orders:</h5>" : id === "sell-order-list" ? "<h5>Sell orders:</h5>" : "<h5>Other orders:</h5>";
   }
 
   list.appendChild(singleOrder);

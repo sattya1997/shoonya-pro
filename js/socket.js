@@ -109,15 +109,19 @@ function updateOrderPos(data) {
   const curPrice = parseFloat(data.lp);
   const token = data.tk;
   const elements = document.querySelectorAll(`[data-pos-id="${token}"]`);
-  let result = orderDetailsForPnL.find((item) => item.stock === token);
-  if (!result) return;
-  let totalSellQty = result.sell.reduce((total, sell) => total + parseFloat(sell.qty), 0);
-  let totalBuyQty = result.buy.reduce((total, buy) => total + parseFloat(buy.qty), 0);
+  const result = orderDetailsForPnL.find(item => item.stock === token);
+  
+  if (!result || !elements || isNaN(curPrice)) return;
+
+  // Calculate total buy and sell quantities
+  const totalSellQty = result.sell.reduce((total, sell) => total + parseFloat(sell.qty), 0);
+  const totalBuyQty = result.buy.reduce((total, buy) => total + parseFloat(buy.qty), 0);
   result.remaining = totalBuyQty;
   result.remainingBuyQty = totalBuyQty;
   result.remainingSellQty = totalSellQty;
-  if (!elements || !data.lp) return;
-  elements.forEach((element) => {
+
+  elements.forEach(element => {
+    element.parentNode.querySelector("#ltp").innerHTML = parseFloat(curPrice).toFixed(2);
     if (element.dataset.posStatus === "DONE") return;
     const posPrc = parseFloat(element.dataset.posPrc);
     const posQty = parseFloat(element.dataset.posQty);
@@ -125,42 +129,47 @@ function updateOrderPos(data) {
     const status = element.dataset.posStatus;
     let pos = parseFloat((curPrice * posQty) - (posPrc * posQty)).toFixed(2);
 
-    if (type === "B" && status === "COMPLETE" && totalBuyQty === totalSellQty) {
-      element.dataset.posStatus = "DONE";
-      element.innerText = "Done";
-      element.style.color = "green";
-      return;
+    if (type === "B" && status === "COMPLETE") {
+      if (totalBuyQty <= totalSellQty) {
+        markAsDone(element);
+        return;
+      }
+      if (totalBuyQty > totalSellQty && (result.remainingBuyQty - totalSellQty) > 0 && result.remainingSellQty > 0) {
+        markAsDone(element);
+        result.remainingBuyQty -= posQty;
+        //result.remainingSellQty -= posQty;
+        return;
+      }
+      updatePosition(element, pos);
     }
 
-    if (type === "B" && status === "COMPLETE" && totalBuyQty > totalSellQty && (result.remainingBuyQty - totalSellQty) > 0 && result.remainingSellQty > 0) {
-      element.dataset.posStatus = "DONE";
-      element.innerText = "Done";
-      element.style.color = "green";
-      result.remainingBuyQty = result.remainingBuyQty - posQty;
-      result.remainingSellQty = result.remainingSellQty - posQty;
-      return;
-    }
-    if (type === "B" && status === "COMPLETE") {
-      element.innerText = pos > 0 ? `+${pos}` : pos;
-      element.style.color = pos > 0 ? "green" : "red";
-      result.remainingBuyQty - posQty;
-    }
     if (type === "S" && status === "COMPLETE") {
-      element.dataset.posStatus = "DONE";
+
+      markAsDone(element);
       let remainingQty = posQty;
-      let totalBuyPriceForThisStock = result.buy.reduce((total, buy) => {
+      const totalBuyPriceForThisStock = result.buy.reduce((total, buy) => {
         if (buy.status === "COMPLETE" && remainingQty > 0) {
-          total += buy.prc * Math.min(parseFloat(buy.qty), remainingQty);
-          remainingQty -= buy.qty;
+          const matchedQty = Math.min(parseFloat(buy.qty), remainingQty);
+          total += buy.prc * matchedQty;
+          remainingQty -= matchedQty;
         }
         return total;
       }, 0);
-
       pos = parseFloat(posPrc * posQty - totalBuyPriceForThisStock).toFixed(2);
-      element.innerText = pos > 0 ? `+${pos}` : pos;
-      element.style.color = pos > 0 ? "green" : "red";
+      updatePosition(element, pos);
     }
   });
+
+  function markAsDone(element) {
+    element.dataset.posStatus = "DONE";
+    element.innerText = "Done";
+    element.style.color = "green";
+  }
+
+  function updatePosition(element, pos) {
+    element.innerText = pos > 0 ? `+${pos}` : pos;
+    element.style.color = pos > 0 ? "green" : "red";
+  }
 }
 
 function reconnect() {
@@ -241,6 +250,30 @@ function createNiftyDataField(data) {
   }
 }
 
+const niftyTag = document.getElementById("nifty-tag");
+const topp = window.innerHeight/2 + window.innerHeight/8;
+
+niftyTag.addEventListener("click", (event) => {
+  if (!niftyChartActive) {
+    handleDetails(26000, 0, topp);
+    niftyChartActive = true;
+  } else {
+    closeChart();
+    niftyChartActive = false;
+  }
+});
+
+function updateNiftyTagPosition() {
+  const niftyTag = document.getElementById("nifty-tag");
+  const niftyPopup = document.getElementById('chart-popup');
+  if (niftyTag) {
+    const rect = niftyTag.getBoundingClientRect();
+    if (niftyPopup) {
+      niftyPopup.style.top = `${rect.top + window.scrollY + 40}px`;
+    }
+  }
+}
+
 function createOrdersDataField(data) {
   if (data && data.lp && data.pc) {
     var sym;
@@ -271,25 +304,15 @@ function createOrdersDataField(data) {
       addDepthRow(depthData);
     }
   }
-  // Event Delegation: Set up the listener on the parent container
-  document.getElementById("orders-tag").addEventListener("click", (event) => {
-    const orderTag = event.target.closest(".order-tag");
-    if (orderTag) {
-      showPopup(orderTag);
-    }
-  });
 }
 
-function updateNiftyTagPosition() {
-  const niftyTag = document.getElementById("nifty-tag");
-  const niftyPopup = document.getElementById('chart-popup');
-  if (niftyTag) {
-    const rect = niftyTag.getBoundingClientRect();
-    if (niftyPopup) {
-      niftyPopup.style.top = `${rect.top + window.scrollY + 40}px`;
-    }
+// Event Delegation: Set up the listener on the parent container
+document.getElementById("orders-tag").addEventListener("click", (event) => {
+  const orderTag = event.target.closest(".order-tag");
+  if (orderTag) {
+    showPopup(orderTag);
   }
-}
+});
 
 // Function to show the popup
 function showPopup(orderTag) {
@@ -725,20 +748,6 @@ customButton.addEventListener("click", function () {
   fileInput.click();
 });
 
-const niftyTag = document.getElementById("nifty-tag");
-const topp = window.innerHeight/2 + window.innerHeight/8;
-
-niftyTag.addEventListener("click", (event) => {
-  if (!niftyChartActive) {
-    handleDetails(26000, 0, topp);
-    niftyChartActive = true;
-  } else {
-    closeChart();
-    niftyChartActive = false;
-  }
-  
-});
-
 fileInput.addEventListener("change", function (event) {
   const file = event.target.files[0];
   if (file) {
@@ -752,124 +761,77 @@ fileInput.addEventListener("change", function (event) {
 });
 
 function refreshCardData(data) {
-  var curPrice = 0;
-  var openPrice = 0;
-  var highPrice = 0;
-  var lowPrice = 0;
-  if (data.tk) {
-    const card = document.getElementById('card-' + data.tk);
-    if (card) {
-      if (data.lp) {
-        curPrice = data.lp;
-        const element = document.getElementById(data.tk+"-last-price");
-        element.textContent = data.lp;
-        const openPrice = parseFloat(document.getElementById(data.tk+'-open').textContent);
-        if (data.lp < openPrice) {
-          element.parentNode.style.color = 'red';
-        } else {
-          element.parentNode.style.color = 'green';
-        }
-      }
+  if (!data.tk) {
+    console.log('Token missing in data');
+    return;
+  }
 
-      if (data.pc) {
-        const openElement = document.getElementById(data.tk+'-open');
-        const changeElement = document.getElementById(data.tk+"-change");
-        var value = parseFloat(openElement.textContent);
-        
-        const changeValue = parseFloat(value + (data.pc*value/100));
-        const change = parseFloat(changeValue - value).toFixed(2);
-        changeElement.innerText = change + '('+data.pc + ' %)';
+  const card = document.getElementById('card-' + data.tk);
+  if (!card) {
+    console.log('Card not found', data);
+    return;
+  }
 
-        if (data.pc < 0) {
-          changeElement.parentNode.style.color = 'red';
-        } else {
-          changeElement.parentNode.style.color = 'green';
-        }
-      }
+  const elements = {
+    lastPrice: document.getElementById(`${data.tk}-last-price`),
+    open: document.getElementById(`${data.tk}-open`),
+    change: document.getElementById(`${data.tk}-change`),
+    volume: document.getElementById(`${data.tk}-vol`),
+    ltq: document.getElementById(`${data.tk}-ltq`),
+    ltt: document.getElementById(`${data.tk}-ltt`),
+    avgPrice: document.getElementById(`${data.tk}-avg-price`),
+    high: document.getElementById(`${data.tk}-high`),
+    low: document.getElementById(`${data.tk}-low`)
+  };
 
-      if (data.v) {
-        document.getElementById(data.tk+"-vol").innerText = data.v;
-      }
+  let curPrice = data.lp || 0;
+  let openPrice = parseFloat(elements.open?.textContent || 0);
+  let highPrice = data.h || 0;
+  let lowPrice = data.l || 0;
 
-      if (data.ltq) {
-        document.getElementById(data.tk+"-ltq").innerText = data.ltq;
-      }
+  if (data.lp) {
+    elements.lastPrice.textContent = data.lp;
+    elements.lastPrice.parentNode.style.color = data.lp < openPrice ? 'red' : 'green';
+  }
 
-      if (data.ltt) {
-        document.getElementById(data.tk+"-ltt").innerText = data.ltt;
-      }
+  if (data.pc) {
+    const changeValue = openPrice + (data.pc * openPrice / 100);
+    const change = (changeValue - openPrice).toFixed(2);
+    elements.change.innerText = `${change} (${data.pc}%)`;
+    elements.change.parentNode.style.color = data.pc < 0 ? 'red' : 'green';
+  }
 
-      if (data.ap) {
-        document.getElementById(data.tk+"-avg-price").innerText = data.ap;
-      }
+  if (data.v) elements.volume.innerText = data.v;
+  if (data.ltq) elements.ltq.innerText = data.ltq;
+  if (data.ltt) elements.ltt.innerText = data.ltt;
+  if (data.ap) elements.avgPrice.innerText = data.ap;
+  if (data.h) elements.high.innerText = data.h;
+  if (data.l) elements.low.innerText = data.l;
 
-      if (data.h) {
-        highPrice = data.h;
-        document.getElementById(data.tk+"-high").innerText = data.h;
-      }
+  updateLevels(data);
 
-      if (data.l) {
-        lowPrice = data.l;
-        document.getElementById(data.tk+"-low").innerText = data.l;
-      }
+  // Update bar
+  if (!curPrice) curPrice = parseFloat(elements.lastPrice?.innerHTML || 0);
+  if (!highPrice) highPrice = parseFloat(elements.high?.innerHTML || 0);
+  if (!lowPrice) lowPrice = parseFloat(elements.low?.innerHTML || 0);
 
-      if (data.bq1) updateElement(1, null, data.bq1);
-      if (data.bp1) updateElement(1, data.bp1, null);
-      if (data.bq2) updateElement(2, null, data.bq2);
-      if (data.bp2) updateElement(2, data.bp2, null);
-      if (data.bq3) updateElement(3, null, data.bq3);
-      if (data.bp3) updateElement(3, data.bp3, null);
-      if (data.bq4) updateElement(4, null, data.bq4);
-      if (data.bp4) updateElement(4, data.bp4, null);
-      if (data.bq5) updateElement(5, null, data.bq5);
-      if (data.bp5) updateElement(5, data.bp5, null);
-      
-      if (data.sq1) updateElement2(1, null, data.sq1);
-      if (data.sp1) updateElement2(1, data.sp1, null);
-      if (data.sq2) updateElement2(2, null, data.sq2);
-      if (data.sp2) updateElement2(2, data.sp2, null);
-      if (data.sq3) updateElement2(3, null, data.sq3);
-      if (data.sp3) updateElement2(3, data.sp3, null);
-      if (data.sq4) updateElement2(4, null, data.sq4);
-      if (data.sp4) updateElement2(4, data.sp4, null);
-      if (data.sq5) updateElement2(5, null, data.sq5);
-      if (data.sp5) updateElement2(5, data.sp5, null);
+  updateCardBar(card, openPrice, curPrice, highPrice, lowPrice);
 
-      //update Bar
-      openPrice = document.getElementById(data.tk+"-open").innerHTML;
-
-      if (curPrice === 0) {
-        curPrice = document.getElementById(data.tk+"-last-price").innerHTML;
-      }
-
-      if (highPrice === 0) {
-        highPrice = document.getElementById(data.tk+"-high").innerHTML;
-      }
-
-      if (lowPrice === 0) {
-        lowPrice = document.getElementById(data.tk+"-low").innerHTML;
-      }
-      updateCardBar(card, openPrice, curPrice, highPrice, lowPrice);
-    } else {
-      console.log('card not found'+ data);
+  function updateLevels(data) {
+    for (let i = 1; i <= 5; i++) {
+      updateElement(`buy-price-${i}`, data[`bp${i}`], data[`bq${i}`]);
+      updateElement(`sell-price-${i}`, data[`sp${i}`], data[`sq${i}`]);
     }
   }
 
-  function updateElement(idSuffix, price, quantity) {
-    const element = document.getElementById(`${data.tk}-buy-price-${idSuffix}`); if (!element) return;
-    let [currentPrice, currentQuantity] = element.innerText.split(' × ');
-    const newPrice = price !== null ? price : currentPrice;
-    const newQuantity = quantity !== null ? quantity : currentQuantity;
+  function updateElement(suffix, price, quantity) {
+    const element = document.getElementById(`${data.tk}-${suffix}`);
+    if (!element) return;
+    const [currentPrice, currentQuantity] = element.innerText.split(' × ');
+    const newPrice = price !== null && price !== undefined ? price : currentPrice;
+    const newQuantity = quantity !== null && quantity !== undefined ? quantity : currentQuantity;
     element.innerText = `${newPrice} × ${newQuantity}`.trim();
-  };
-
-  function updateElement2(idSuffix, price, quantity) {
-    const element = document.getElementById(`${data.tk}-sell-price-${idSuffix}`); if (!element) return;
-    let [currentPrice, currentQuantity] = element.innerText.split(' × ');
-    const newPrice = price !== null ? price : currentPrice;
-    const newQuantity = quantity !== null ? quantity : currentQuantity;
-    element.innerText = `${newPrice} × ${newQuantity}`.trim();
-  };
+  }
 }
 
 function calculateTotalPnL(orderDetailsForPnL) {
