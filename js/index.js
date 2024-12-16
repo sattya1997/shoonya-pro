@@ -1062,7 +1062,7 @@ function generateOrderDetails(order, id, count) {
   singleOrder.innerHTML = `
     <label>${count}.&nbsp;</label>
     <span>${order.tsym.split('-')[0]}&nbsp;&nbsp;</span>
-    <label></label><span>${order.avgprc || order.prc}&nbsp;&nbsp;</span>
+    <label></label><span>${order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
     <label>LTP:&nbsp;</label><span id ="ltp">&nbsp;&nbsp;</span>
     <label></label><span>${order.status == "COMPLETE" ? 'Dn' : "Opn"}&nbsp;&nbsp;</span>
