@@ -1,4 +1,51 @@
 const websocketUrl = API.websocket();
+var graphData = '';
+var times = [];
+var prices = [];
+var ctx = document.querySelector("#stockChart").getContext("2d");
+var chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Stock Price",
+        data: [],
+        borderColor: "white",
+        borderWidth: .7,
+        fill: true,
+        backgroundColor: "#6185cf",
+        pointRadius: 0,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: "time",
+        unit: "minute",
+        displayFormats: {
+          minute: "HH:mm",
+        },
+      },
+      y: {
+        title: {
+          display: false,
+        },
+        ticks: {
+          fontSize: 10,
+        },
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    },
+  },
+});
 
 let websocket = null;
 const maxReconnectAttempts = 5;
@@ -75,12 +122,19 @@ function connectWebSocket() {
         }
         break;
       case "tf":
-        // Touchline feed update
+        // Touchline feed update]
         if (message.tk === "26000") {
           createNiftyDataField(message);
         } else {
           createOrdersDataField(message);
           updateOrderPos(message);
+          if (message.lp) {
+            updateCreateOrder(message);
+          }
+        }
+
+        if (message.lp) {
+          updateGraph(message);
         }
         break;
       case "dk":
@@ -103,6 +157,29 @@ function connectWebSocket() {
   websocket.onerror = function (error) {
     console.error("WebSocket error observed:", error);
   };
+}
+
+function updateGraph(data) {
+  let token = document.getElementById('chart-popup').dataset.token;
+  if (data.tk === token) {
+    const date = new Date(data.ft * 1000);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
+
+    times.push(formattedTime);
+    prices.push(data.lp);
+    chart.data.labels = times;
+    chart.data.datasets[0].data = prices;
+    chart.update();
+  }
+}
+
+function updateCreateOrder(data) {
+  orderLtps = document.querySelectorAll(`.order-ltp-${data.tk}`);
+  orderLtps.forEach(element => {
+    element.innerHTML = data.lp;
+  })
 }
 
 function updateOrderPos(data) {
@@ -400,21 +477,18 @@ function handleSell(tokenId) {
 function closeChart() {
   const oldPopup = document.getElementById("chart-popup");
   if (oldPopup) {
-    oldPopup.remove();
+    oldPopup.hidden = true;
   }
 }
 
 function handleDetails(tokenId, left, top) {
-  closeChart();
-  const chartPopup = document.createElement("div");
 
-  chartPopup.innerHTML = ` <div class="drag-handle" style="padding: 1px; cursor: move; display: flex; justify-content: space-between;"> <span></span> <span class="close-modal" id='cls-btn-chart'></span> </div> <canvas id="stockChart" data-id="chart-${tokenId}"></canvas> `;
-
-  chartPopup.id = "chart-popup";
+  const chartPopup = document.getElementById('chart-popup');
+  chartPopup.dataset.token = tokenId;
   chartPopup.style.top = `${top}px`;
+  chartPopup.hidden = false;
   chartPopup.style.minWidth = '350px';
   chartPopup.style.maxHeight = '180px'
-  document.body.appendChild(chartPopup);
   document.getElementById('cls-btn-chart').addEventListener("click", (event) => {
     closeChart();
   });
@@ -493,13 +567,14 @@ async function getChartData(tokenId) {
       const stockData = res.data;
       chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv }; });
       var newChartData = chartData.reverse();
-      chartData = newChartData.map((item) => ({
+      graphData = newChartData.map((item) => ({
         x: item.t,
         c: item.c,
         v: item.v,
       }));
-
-      createGraph(chartData);
+      times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
+      prices = graphData.map(item => item.c);
+      createGraph();
     }
   })
   .catch((error) => {
@@ -507,55 +582,9 @@ async function getChartData(tokenId) {
   });
 }
 
-function createGraph(graphData) {
-  const times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
-  const prices = graphData.map(item => item.c);
-
-  const ctx = document.querySelector("#stockChart").getContext("2d");
-  const chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: times,
-      datasets: [
-        {
-          label: "Stock Price",
-          data: prices,
-          borderColor: "white",
-          borderWidth: .7,
-          fill: true,
-          backgroundColor: "#6185cf",
-          pointRadius: 0,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          type: "time",
-          unit: "minute",
-          displayFormats: {
-            minute: "HH:mm",
-          },
-        },
-        y: {
-          title: {
-            display: false,
-          },
-          ticks: {
-            fontSize: 10,
-          },
-        },
-        plugins: {
-          legend: {
-            display: false,
-          },
-        },
-      },
-    },
-  });
-
+function createGraph() {
+  chart.data.labels = times;
+  chart.data.datasets[0].data = prices;
   chart.update();
 }
 
