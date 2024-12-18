@@ -799,11 +799,11 @@ table th {
 
 table tr {
   font-size: 12px;
-  ;
+  background-color: #404040;;
 }
 
 table tr:nth-child(even) {
-  background-color: #ecf0f1;
+  background-color: #e0e1f9;
 }
 
 table tr:hover {
