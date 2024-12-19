@@ -46,6 +46,8 @@ const zoomOptions = {
 };
 
 var ctx = document.getElementById("candlestickChart").getContext("2d");
+//Chart.register(ChartJsPluginAnnotation);
+Chart.register(ChartDataLabels);
 var chart = new Chart(ctx, {
   type: "candlestick",
   data: {
@@ -60,36 +62,36 @@ var chart = new Chart(ctx, {
         type: "bar",
         label: "Volume",
         data: volumeData,
-        yAxisID: 'volume-axis',
+        yAxisID: "volume-axis",
         backgroundColor: "rgba(0, 0, 255, 0.35)",
         barPercentage: 0.35,
         parsing: {
-          yAxisKey: 'y'
-        }
+          yAxisKey: "y",
+        },
       },
     ],
   },
   options: {
     animation: false,
     scales: {
-      'price-axis': {
+      "price-axis": {
         type: "time",
         time: {
           unit: "minute",
           tooltipFormat: "HH:mm",
         },
       },
-      'volume-axis': {
-        type: 'linear',
+      "volume-axis": {
+        type: "linear",
         display: false,
         grid: {
           drawOnChartArea: false,
         },
         min: 0,
-        grace: '5%',
+        grace: "5%",
         afterFit: (scaleInstance) => {
           scaleInstance.height = scaleInstance.height * 0.3;
-        }
+        },
       },
     },
     plugins: {
@@ -97,6 +99,18 @@ var chart = new Chart(ctx, {
       backgroundColor: {},
       tooltip: {
         enabled: tooltipValue,
+      },
+      datalabels: {
+        align: "right",
+        anchor: "end",
+        offset: -10,
+        backgroundColor: "rgba(0,0,0,0.8)",
+        borderRadius: 4,
+        color: "white",
+        font: { weight: "bold" },
+        formatter: function (value, context) {
+          return '';
+        },
       },
     },
   },
@@ -150,22 +164,41 @@ async function getCandlestickChartData() {
       const stockData = res.data;
       candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
       candlestickData = candlestickData.reverse();
-      var newCandlestickData = candlestickData.map((item) => ({
-        x: item.t,
-        o: item.o,
-        h: item.h,
-        l: item.l,
-        c: item.c,
-      }));
-  
-      var newVolumeData = candlestickData.map((item) => ({
-        x: item.t,
-        y: item.v,
-      }));
-      chart.data.datasets[0].data = newCandlestickData;
-      chart.data.datasets[1].data = newVolumeData;
+      var newCandlestickData = [];
+      var newVolumeData = [];
+      for (let index = 0; index < candlestickData.length; index++) {
+        const item = candlestickData[index];
+        newCandlestickData.push({
+          x: item.t,
+          o: item.o,
+          h: item.h,
+          l: item.l,
+          c: item.c,
+        });
+        newVolumeData.push({
+          x: item.t,
+          y: item.v,
+        });
+      }
+      chart.data.datasets[0].data = [...newCandlestickData];
+      chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+      var newPrice = newCandlestickData[newCandlestickData.length - 1].c;
+      chart.options.plugins.datalabels.formatter = function(value, context) {
+        const datasetIndex = context.datasetIndex;
+        const dataIndex = context.dataIndex;
+        const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+        const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+        if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+          return `${newPrice}`;
+        }
+        else if (dataIndex === dataLength - 3 && datasetType === 'bar') {
+          return `${newVolumeData[newVolumeData.length - 1].y}`
+        } else {
+          return '';
+        }
+      };
       chart.update();
-      document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
+      document.getElementById("current-price").innerText = newPrice;
       document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
     }
   })
