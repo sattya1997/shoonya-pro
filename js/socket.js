@@ -1,9 +1,6 @@
 const websocketUrl = API.websocket();
-var graphData = '';
-var times = [];
-var prices = [];
-var ctx = document.querySelector("#stockChart").getContext("2d");
-var chart = new Chart(ctx, {
+var ctx2 = document.getElementById("stockChart").getContext("2d");
+var chart2 = new Chart(ctx2, {
   type: "line",
   data: {
     labels: [],
@@ -12,38 +9,13 @@ var chart = new Chart(ctx, {
         label: "Stock Price",
         data: [],
         borderColor: "white",
-        borderWidth: .7,
+        borderWidth: 0.7,
         fill: true,
         backgroundColor: "#6185cf",
         pointRadius: 0,
+        yAxisID: "price-axis",
       },
     ],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: "time",
-        unit: "minute",
-        displayFormats: {
-          minute: "HH:mm",
-        },
-      },
-      y: {
-        title: {
-          display: false,
-        },
-        ticks: {
-          fontSize: 10,
-        },
-      },
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-    },
   },
 });
 
@@ -135,6 +107,7 @@ function connectWebSocket() {
 
         if (message.lp) {
           updateGraph(message);
+          updateCandleStick(message)
         }
         break;
       case "dk":
@@ -169,9 +142,38 @@ function updateGraph(data) {
 
     times.push(formattedTime);
     prices.push(data.lp);
-    chart.data.labels = times;
-    chart.data.datasets[0].data = prices;
+    chart2.data.labels = times;
+    chart2.data.datasets[0].data = prices;
+    chart2.update();
+  }
+}
+
+function updateCandleStick(data) {
+  let token = document.getElementById('main-graph').dataset.token;
+  if (data.tk === token) {
+    var newCandlestickData = candlestickData.map((item) => ({
+      x: item.t,
+      o: item.o,
+      h: item.h,
+      l: item.l,
+      c: item.c,
+    }));
+
+    var newVolumeData = candlestickData.map((item) => ({
+      x: item.t,
+      y: item.v,
+    }));
+    const position = newCandlestickData.length - 1;
+
+    if (data.lp) {
+      newCandlestickData[position].c = data.lp;
+    }
+
+    chart.data.datasets[0].data = newCandlestickData;
+    chart.data.datasets[1].data = newVolumeData;
     chart.update();
+    document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
+    document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
   }
 }
 
@@ -409,6 +411,7 @@ function showPopup(orderTag) {
     <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
     <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
     <button style="background-color: #9e5fa9;" onclick="addToDetailsList('${tokenId}')">Card</button>
+    <button style="background-color: #02c209;" onclick="setData(${tokenId})">Candle</button>
   `;
 
   // Position the popup
@@ -583,9 +586,9 @@ async function getChartData(tokenId) {
 }
 
 function createGraph() {
-  chart.data.labels = times;
-  chart.data.datasets[0].data = prices;
-  chart.update();
+  chart2.data.labels = times;
+  chart2.data.datasets[0].data = prices;
+  chart2.update();
 }
 
 function convertToMilliseconds(timeString) {

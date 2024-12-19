@@ -56,6 +56,12 @@ const uid = "FA393936";
 
 var niftyChartActive = false
 
+var stockSymbol = "";
+var candlestickVisible = false;
+
+var candlestickData = [];
+var volumeData = [];
+
 function postRequest(route, params, usertoken = "") {
   let url = API.endpoint() + routes[route];
   let payload = "jData=" + JSON.stringify(params);

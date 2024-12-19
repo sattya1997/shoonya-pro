@@ -1,6 +1,3 @@
-const userToken = localStorage.getItem("pro-userToken");
-var candlestickData = [];
-var volumeData = [];
 var slider = document.getElementById("candle-range");
 var output = document.getElementById("candle-number");
 slider.value = sessionStorage.getItem("sliderValue");
@@ -8,19 +5,8 @@ output.innerHTML = slider.value;
 sessionStorage.setItem("sliderValue", slider.value);
 
 var queryString = window.location.search;
-var urlParams = new URLSearchParams(queryString);
-var stockSymbol = urlParams.get("stockSymbol");
-
-const now = new Date();
-const marketEndTime = new Date(now);
-marketEndTime.setHours(15, 30, 0, 0);
-const endTime = now > marketEndTime ? marketEndTime : now;
-var et = Math.floor(endTime.getTime() / 1000);
-
-const startTime = new Date(endTime);
-startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
-const st = Math.floor(startTime.getTime() / 1000);
-
+// var urlParams = new URLSearchParams(queryString);
+// var stockSymbol = urlParams.get("stockSymbol");
 var tooltipValue = sessionStorage.getItem("tooltipValue");
 tooltipValue = tooltipValue === "true";
 var checkbox = document.getElementById("tooltip-toggle");
@@ -68,6 +54,7 @@ var chart = new Chart(ctx, {
         label: stockSymbol,
         data: candlestickData,
         yAxisID: "price-axis",
+        backgroundColor: "rgba(75, 192, 192, 1)",
       },
       {
         type: "bar",
@@ -107,28 +94,48 @@ var chart = new Chart(ctx, {
     },
     plugins: {
       zoom: zoomOptions,
+      backgroundColor: {},
       tooltip: {
         enabled: tooltipValue,
       },
     },
   },
 });
-getCandlestickChartData();
+//getCandlestickChartData();
 
 async function updateChart() {
   while (startFetch) {
     try {
       sliderValue = sessionStorage.getItem("sliderValue");
       await getCandlestickChartData();
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 60000));
     } catch (error) {
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 60000));
       console.log(error);
     }
   }
 }
 
 async function getCandlestickChartData() {
+  const now = new Date();
+  const marketEndTime = new Date(now);
+  marketEndTime.setHours(15, 30, 0, 0);
+  const morningLimit = new Date(now); 
+  morningLimit.setHours(9, 35, 0, 0);
+  let endTime;
+  let startTime;
+  if (now < morningLimit) {
+    endTime = new Date(now);
+    endTime.setDate(now.getDate() - 1);
+    endTime.setHours(15, 15, 0, 0);
+    startTime = new Date(endTime);
+  } else {
+    endTime = now > marketEndTime ? marketEndTime : now;
+    startTime = new Date(endTime);
+  }
+  var et = Math.floor(endTime.getTime() / 1000);
+  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
+  const st = Math.floor(startTime.getTime() / 1000);
   const jData = {
     uid: uid,
     exch: "NSE",
@@ -142,8 +149,8 @@ async function getCandlestickChartData() {
     if (res && res.data && res.data.length > 0) {
       const stockData = res.data;
       candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
-      var newCandlestickData = candlestickData.reverse();
-      candlestickData = newCandlestickData.map((item) => ({
+      candlestickData = candlestickData.reverse();
+      var newCandlestickData = candlestickData.map((item) => ({
         x: item.t,
         o: item.o,
         h: item.h,
@@ -151,17 +158,16 @@ async function getCandlestickChartData() {
         c: item.c,
       }));
   
-      volumeData = newCandlestickData.map((item) => ({
+      var newVolumeData = candlestickData.map((item) => ({
         x: item.t,
         y: item.v,
       }));
-      chart.data.datasets[0].data = candlestickData;
-      chart.data.datasets[1].data = volumeData;
+      chart.data.datasets[0].data = newCandlestickData;
+      chart.data.datasets[1].data = newVolumeData;
       chart.update();
+      document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
+      document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
     }
-  
-    document.getElementById("current-price").innerText = candlestickData[candlestickData.length - 1].c;
-    document.getElementById("current-vol").innerText = volumeData[volumeData.length - 1].y;
   })
   .catch((error) => {
     console.error("Error:", error);
@@ -217,30 +223,14 @@ function back() {
 }
 
 // Update the current slider value (each time drag the slider handle)
-slider.oninput = function () {
+slider.onchange = function () {
   sessionStorage.setItem("sliderValue", this.value);
-  var newCandlestickData = [];
-  var newVolumeData = [];
-  output.innerHTML = this.value;
-
-  if (candlestickData.length > this.value) {
-    candlestickData = candlestickData.slice(-this.value);
-    newVolumeData = volumeData.slice(-this.value);
-  }
-
-  chart.data.datasets[0].data = candlestickData.slice(-this.value);
-  chart.data.datasets[1].data = volumeData.slice(-this.value);
-  chart.options = {
-    responsive: this.checked,
-    plugins: {
-      zoom: zoomOptions,
-      tooltip: {
-        enabled: tooltipValue,
-      },
-    },
-  };
-  chart.update();
+  getCandlestickChartData();
 };
+
+slider.oninput = function () {
+  document.getElementById('candle-number').innerHTML = this.value;
+}
 
 document
   .getElementById("tooltip-toggle")
@@ -266,8 +256,8 @@ document.getElementById("gap-toggle").addEventListener("change", function () {
   sessionStorage.setItem("gapValue", this.checked.toString());
 });
 
-document.getElementById("live-toggle").addEventListener("change", function () {
+document.getElementById("live-toggle").addEventListener("change", async function () {
   startFetch = !startFetch;
-  updateChart();
+  await updateChart();
   chart.update();
 });

@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      localStorage.removeItem("pro-userToken");
+      //localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -194,11 +194,11 @@ async function logout() {
     .then((data) => {
       if (data.stat === "Ok") {
         //have to uncomment later
-        localStorage.removeItem("pro-userToken");
+        //localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       } else {
         alert("Session expires. Please login again.");
-        localStorage.removeItem("pro-userToken");
+        //localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       }
     })
@@ -224,7 +224,7 @@ function closeCard(token) {
 function createStockCard(data) {
   const detailsList = document.getElementById("details-list");
   const goToChartPage = document.createElement("div");
-  goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" href="./chartPage.html?stockSymbol=${data.token}"><img src="./icons/stockChart.png"></a>`;
+  goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" onclick="setData(${data.token})"><img src="./icons/stockChart.png"></a>`;
   goToChartPage.id = "card-header-btns";
   const cardCloseBtn = document.createElement("div");
   cardCloseBtn.classList.add("close-modal");
@@ -338,6 +338,21 @@ function createStockCard(data) {
   const cardElementForBar = document.getElementById('card-'+data.token);
 
   updateCardBar(cardElementForBar, data.o, data.lp, data.h, data.l);
+}
+
+function setData(symbol) {
+  stockSymbol = symbol;
+  const element = document.getElementById('main-graph');
+  
+  element.dataset.token = symbol;
+  document.getElementById('main-graph').style.display = 'block';
+  getCandlestickChartData();
+}
+
+document.getElementById("candle-graph-close").addEventListener("click", hideCandlestickGraph);
+
+function hideCandlestickGraph() {
+  document.getElementById('main-graph').style.display = 'none';
 }
 
 function goToChartPage(data) {

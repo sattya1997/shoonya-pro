@@ -946,13 +946,12 @@ h1 {
 }
 
 #dynamic-popup button {
-  min-width: 35px;
-  margin: 5px;
+  min-width: 30px;
   padding: 3px 3px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   color: white;
   background-color: #007bff;
