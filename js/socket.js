@@ -9,8 +9,8 @@ var chart2 = new Chart(ctx2, {
       {
         label: "Stock Price",
         data: [],
-        borderColor: "white",
-        borderWidth: 0.7,
+        borderColor: "rgb(51, 255, 64)",
+        borderWidth: 1.5,
         fill: true,
         backgroundColor: "#6185cf",
         pointRadius: 0,
@@ -19,14 +19,15 @@ var chart2 = new Chart(ctx2, {
     ],
   },
   options: {
+    animation: false,
     plugins: {
       datalabels: {
         align: "right",
         anchor: "end",
-        offset: -10,
+        offset: -50,
         backgroundColor: "rgba(0, 0, 0, 0)",
         borderRadius: 4,
-        color: "rgba(0, 0, 0, 0)",
+        color: "rgba(255, 255, 255, 0.78)",
         font: { weight: "bold" },
         formatter: function (value, context) {
           return '';
@@ -161,6 +162,18 @@ function updateGraph(data) {
     prices.push(data.lp);
     chart2.data.labels = times;
     chart2.data.datasets[0].data = prices;
+    var newPrice = data.lp;
+    chart2.options.plugins.datalabels.formatter = function(value, context) {
+      const datasetIndex = context.datasetIndex;
+      const dataIndex = context.dataIndex;
+      const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+      const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+      if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+        return `${newPrice}`;
+      } else {
+        return '';
+      }
+    };
     chart2.update();
   }
 }
@@ -616,8 +629,17 @@ async function getChartData(tokenId) {
 function createGraph() {
   chart2.data.labels = times;
   chart2.data.datasets[0].data = prices;
+  var newPrice = prices[prices.length-1];
   chart2.options.plugins.datalabels.formatter = function(value, context) {
-    return '';
+    const datasetIndex = context.datasetIndex;
+    const dataIndex = context.dataIndex;
+    const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+    const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+    if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+      return `${newPrice}`;
+    } else {
+      return '';
+    }
   };
   chart2.update();
 }
