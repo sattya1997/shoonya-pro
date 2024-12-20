@@ -1,46 +1,50 @@
 const websocketUrl = API.websocket();
-var graphData = '';
-var times = [];
-var prices = [];
-var ctx = document.querySelector("#stockChart").getContext("2d");
-var chart = new Chart(ctx, {
+var ctx2 = document.getElementById("stockChart").getContext("2d");
+Chart.register(ChartDataLabels);
+var chart2 = new Chart(ctx2, {
   type: "line",
   data: {
     labels: [],
     datasets: [
       {
-        label: "Stock Price",
+        label: "Price",
         data: [],
-        borderColor: "white",
-        borderWidth: .7,
+        borderColor: "rgb(51, 255, 64)",
+        borderWidth: 1.5,
         fill: true,
-        backgroundColor: "#6185cf",
+        backgroundColor: "rgba(0,0,0,0)",
         pointRadius: 0,
+        yAxisID: "price-axis",
+      },
+      {
+        type: "bar",
+        label: "Volume",
+        data: [],
+        yAxisID: "volume-axis",
+        backgroundColor: "rgb(255, 255, 255)",
+        barPercentage: 0.5,
+        parsing: {
+          yAxisKey: "y",
+        },
       },
     ],
   },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
+    animation: false,
     scales: {
-      x: {
-        type: "time",
-        unit: "minute",
-        displayFormats: {
-          minute: "HH:mm",
-        },
-      },
-      y: {
-        title: {
-          display: false,
-        },
-        ticks: {
-          fontSize: 10,
-        },
-      },
-      plugins: {
-        legend: {
-          display: false,
+      "volume-axis": { display: false, beginAtZero: true, position: "right" },
+    },
+    plugins: {
+      datalabels: {
+        align: "right",
+        anchor: "end",
+        offset: -50,
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderRadius: 4,
+        color: "rgba(255, 255, 255, 0.78)",
+        font: { weight: "bold" },
+        formatter: function (value, context) {
+          return "";
         },
       },
     },
@@ -135,6 +139,7 @@ function connectWebSocket() {
 
         if (message.lp) {
           updateGraph(message);
+          updateCandleStick(message)
         }
         break;
       case "dk":
@@ -169,9 +174,62 @@ function updateGraph(data) {
 
     times.push(formattedTime);
     prices.push(data.lp);
-    chart.data.labels = times;
-    chart.data.datasets[0].data = prices;
+    chart2.data.labels = times;
+    chart2.data.datasets[0].data = prices;
+    var newPrice = data.lp;
+    chart2.options.plugins.datalabels.formatter = function(value, context) {
+      const datasetIndex = context.datasetIndex;
+      const dataIndex = context.dataIndex;
+      const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+      const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+      if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+        return `${newPrice}`;
+      } else {
+        return '';
+      }
+    };
+    chart2.update();
+  }
+}
+
+function updateCandleStick(data) {
+  let token = document.getElementById('main-graph').dataset.token;
+  if (data.tk === token) {
+    var newCandlestickData = candlestickData.map((item) => ({
+      x: item.t,
+      o: item.o,
+      h: item.h,
+      l: item.l,
+      c: item.c,
+    }));
+
+    var newVolumeData = candlestickData.map((item) => ({
+      x: item.t,
+      y: item.v,
+    }));
+    const position = newCandlestickData.length - 1;
+
+    if (data.lp) {
+      newCandlestickData[position].c = data.lp;
+    }
+
+    chart.data.datasets[0].data = newCandlestickData;
+    chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+    var newPrice = data.lp;
+    chart.options.plugins.datalabels.formatter = function(value, context) {
+      const datasetIndex = context.datasetIndex;
+      const dataIndex = context.dataIndex;
+      const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+      const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+      if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+        return `${newPrice}`;
+      } else {
+        return '';
+      }
+    };
     chart.update();
+    document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
+    document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
   }
 }
 
@@ -409,6 +467,7 @@ function showPopup(orderTag) {
     <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
     <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
     <button style="background-color: #9e5fa9;" onclick="addToDetailsList('${tokenId}')">Card</button>
+    <button style="background-color: #02c209;" data-name=" ${name}" onclick="setData(${tokenId}, this)">Candle</button>
   `;
 
   // Position the popup
@@ -482,7 +541,6 @@ function closeChart() {
 }
 
 function handleDetails(tokenId, left, top) {
-
   const chartPopup = document.getElementById('chart-popup');
   chartPopup.dataset.token = tokenId;
   chartPopup.style.top = `${top}px`;
@@ -574,6 +632,7 @@ async function getChartData(tokenId) {
       }));
       times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
       prices = graphData.map(item => item.c);
+      volumes = graphData.map(item => item.v);
       createGraph();
     }
   })
@@ -583,9 +642,22 @@ async function getChartData(tokenId) {
 }
 
 function createGraph() {
-  chart.data.labels = times;
-  chart.data.datasets[0].data = prices;
-  chart.update();
+  chart2.data.labels = times;
+  chart2.data.datasets[0].data = prices;
+  chart2.data.datasets[1].data = volumes;
+  var newPrice = prices[prices.length-1];
+  chart2.options.plugins.datalabels.formatter = function(value, context) {
+    const datasetIndex = context.datasetIndex;
+    const dataIndex = context.dataIndex;
+    const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+    const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+    if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+      return `${newPrice}`;
+    } else {
+      return '';
+    }
+  };
+  chart2.update();
 }
 
 function convertToMilliseconds(timeString) {

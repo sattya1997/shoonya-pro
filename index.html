@@ -6,8 +6,14 @@
   <title>Shoonya Dashboard</title>
   <script src="./js/axios.min.js"></script>
   <script src="./js/config.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1"></script>
+  <script src="./js/chartjs-chart-financial.js" type="text/javascript"></script>
   <link rel="stylesheet" href="./style/index.css">
+  <link rel="stylesheet" type="text/css" href="./style/chartPage.css">
+  
   <script src="./js/pnL.js"></script>
 </head>
 <body>
@@ -50,6 +56,58 @@
       <input type="checkbox" id="toggleSwitch">
       <span class="slider round"></span>
     </label>
+    <div id="main-graph" data-token= "" style="display: none;">
+      <div id="control-bar">
+        <span>
+          <select name="timeframe" id="timeframe" onchange="onTimeframeChange(this.value)">
+            <option value="1" selected="">1d</option>
+            <option value="1w">1w</option>
+            <option value="1m">1m</option>
+            <option value="1y">1y</option>
+          </select>
+        </span>
+        <label class="checkbox-container">
+          <span>Tooltip</span>
+          <input type="checkbox" id="tooltip-toggle">
+          <span class="checkmark"></span>
+        </label>
+        <label class="checkbox-container">
+          <span>Vol</span>
+          <input type="checkbox" id="volume-axis-toggle">
+          <span class="checkmark"></span>
+        </label>
+        <label class="checkbox-container">
+          <span>Fill</span>
+          <input type="checkbox" id="gap-toggle">
+          <span class="checkmark"></span>
+        </label>
+        <label class="checkbox-container">
+          <span>Live</span>
+          <input type="checkbox" id="live-toggle">
+          <span class="checkmark"></span>
+        </label>
+        <label class="checkbox-container"><span onclick="getCandlestickChartData()">&#x21bb;</span></label>
+        <div class="close-modal" id="candle-graph-close"></div>
+      </div>
+      <div class="view-bar">
+        <label>
+          <span id="stock-name"></span>
+        </label>
+        <label>
+          <span>Price: </span>
+          <span id="current-price">248.10</span>
+        </label>
+        <label>
+          <span>Vol: </span>
+          <span id="current-vol">32346</span>
+        </label>
+      </div>
+      <div id="candle-stick"><canvas id="candlestickChart"></canvas></div>
+      <div class="slidecontainer">
+        <div class="graph-slider-text"><span>Candle number limit: </span><span id="candle-number">20</span></div>
+        <input type="range" min="20" max="3000" value="100" class="graph-slider" id="candle-range">
+      </div>
+    </div>
     <div id="details-list"></div>
     <ul id="trade-list"></ul>
     <div class="orders-list">
@@ -74,6 +132,7 @@
   </div>
   <script src="./js/socket.js"></script>
   <script src="./automation/analyze.js"></script>
+  <script src="./js/chartPage.js"></script>
   <script src="./js/index.js"></script>
 </body>
 </html>
