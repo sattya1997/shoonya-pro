@@ -1,5 +1,6 @@
 const websocketUrl = API.websocket();
 var ctx2 = document.getElementById("stockChart").getContext("2d");
+Chart.register(ChartDataLabels);
 var chart2 = new Chart(ctx2, {
   type: "line",
   data: {
@@ -16,6 +17,22 @@ var chart2 = new Chart(ctx2, {
         yAxisID: "price-axis",
       },
     ],
+  },
+  options: {
+    plugins: {
+      datalabels: {
+        align: "right",
+        anchor: "end",
+        offset: -10,
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderRadius: 4,
+        color: "rgba(0, 0, 0, 0)",
+        font: { weight: "bold" },
+        formatter: function (value, context) {
+          return '';
+        },
+      },
+    },
   },
 });
 
@@ -170,7 +187,19 @@ function updateCandleStick(data) {
     }
 
     chart.data.datasets[0].data = newCandlestickData;
-    chart.data.datasets[1].data = newVolumeData;
+    chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+    var newPrice = data.lp;
+    chart.options.plugins.datalabels.formatter = function(value, context) {
+      const datasetIndex = context.datasetIndex;
+      const dataIndex = context.dataIndex;
+      const dataLength = context.chart.data.datasets[datasetIndex].data.length;
+      const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
+      if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
+        return `${newPrice}`;
+      } else {
+        return '';
+      }
+    };
     chart.update();
     document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
     document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
@@ -485,7 +514,6 @@ function closeChart() {
 }
 
 function handleDetails(tokenId, left, top) {
-
   const chartPopup = document.getElementById('chart-popup');
   chartPopup.dataset.token = tokenId;
   chartPopup.style.top = `${top}px`;
@@ -588,6 +616,9 @@ async function getChartData(tokenId) {
 function createGraph() {
   chart2.data.labels = times;
   chart2.data.datasets[0].data = prices;
+  chart2.options.plugins.datalabels.formatter = function(value, context) {
+    return '';
+  };
   chart2.update();
 }
 

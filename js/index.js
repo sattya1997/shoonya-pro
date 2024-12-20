@@ -18,7 +18,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      //localStorage.removeItem("pro-userToken");
+      localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -194,11 +194,11 @@ async function logout() {
     .then((data) => {
       if (data.stat === "Ok") {
         //have to uncomment later
-        //localStorage.removeItem("pro-userToken");
+        localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       } else {
         alert("Session expires. Please login again.");
-        //localStorage.removeItem("pro-userToken");
+        localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       }
     })
@@ -341,6 +341,7 @@ function createStockCard(data) {
 }
 
 function setData(symbol) {
+  Chart.register(ChartDataLabels);
   stockSymbol = symbol;
   const element = document.getElementById('main-graph');
   

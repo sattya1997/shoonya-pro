@@ -190,9 +190,6 @@ async function getCandlestickChartData() {
         const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
         if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
           return `${newPrice}`;
-        }
-        else if (dataIndex === dataLength - 3 && datasetType === 'bar') {
-          return `${newVolumeData[newVolumeData.length - 1].y}`
         } else {
           return '';
         }
