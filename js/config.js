@@ -80,7 +80,6 @@ var cashAvailable = 0;
 var oldOrderValue = 0;
 
 var orderValid = false;
-
 //automate vars
 var standardDeviationWithSma = [];
 var stockSymbolList = ["CESC-EQ", "NCC-EQ", "HUDCO-EQ", "TATAMOTORS-EQ", "ONGC-EQ","OIL-EQ" ,"ICICIB22-EQ"];
@@ -99,6 +98,7 @@ var STMB = 0;
 
 var orderDetailsForPnL = [];
 var showPnLTrue = false;
+var activeTab = 1;
 
 class CircularBuffer {
   constructor(size) {
@@ -137,3 +137,12 @@ class CircularBuffer {
     this.isFull = false;
   }
 }
+
+function getCall(id) {
+  
+  return axios.get(url);
+}
+
+// getCall(10).then(async (res) => {
+//   console.log(JSON.parse(res.data.contents));
+// })

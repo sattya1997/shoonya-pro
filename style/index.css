@@ -55,7 +55,29 @@ body {
   background-color: #ff8888;
 }
 
+.tabs {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-items: center;
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+  padding: 5px;
+}
+
 #main-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-items: center;
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+  padding: 5px;
+}
+
+#home-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -799,7 +821,8 @@ table th {
 
 table tr {
   font-size: 12px;
-  background-color: #404040;;
+  background-color: #000000;
+  color: rgb(203, 203, 203);
 }
 
 table tr:nth-child(even) {

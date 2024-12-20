@@ -13,6 +13,7 @@
   <script src="./js/chartjs-chart-financial.js" type="text/javascript"></script>
   <link rel="stylesheet" href="./style/index.css">
   <link rel="stylesheet" type="text/css" href="./style/chartPage.css">
+  <link rel="stylesheet" type="text/css" href="./style/multiTab.css">
   
   <script src="./js/pnL.js"></script>
 </head>
@@ -29,104 +30,155 @@
     <span id="nav-bar-pl"></span>
     <button id="logout-btn">Logout</button>
   </div>
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab(1)">Home</button>
+    <button class="tab-button" onclick="showTab(2)">Analyze</button>
+  </div>
   <div id="main-container">
-    <div id="depth-toolbar">
-      <span><label for="enable-checkbox">Depth</label><input type="checkbox" id="enable-checkbox"></span>
-      <span><label for="enable-checkbox">Show</label><input type="checkbox" id="enable-show-hide"></span>
-      <span><button id="show-orders-button" onclick="showPnL()">PnL</button></span>
-      <span><button id="clear-button">Clear</button></span>
-      <span><button id="save-button" onclick="saveFile()">Download</button></span>
-      <span>
-        <button id="custom-file-upload-button" class="custom-file-upload">File</button>
-        <input type="file" id="file-input" accept=".json" style="display: none;">
-      </span>
+    <div id="analyze-container" style="display: none;">
+      <div id="marketDropdown">
+        <div class="sub-dropdown">
+            <label for="marketSelect">Index</label>
+            <select id="marketSelect">
+                <option value="9" selected="">Nifty 50</option>
+                <option value="4">Sensex</option>
+                <option value="28">Nifty 100</option>
+                <option value="49">Nifty 200</option>
+                <option value="7">Nifty 500</option>
+                <option value="136">Nifty Total Market</option>
+                <option value="120">Nifty Momentum 30</option>
+                <option value="119">Nifty low volatility</option>
+                <option value="112">Nifty Midcap 150</option>
+                <option value="114">Nifty Smallcap 150</option>
+                <option value="135">Nifty Microcap 250</option>
+                <option value="126">Nifty OilGas</option>
+                <option value="23">Nifty Bank</option>
+                <option value="19">Nifty IT</option>
+                <option value="52">Nifty Auto</option>
+                <option value="123">Nifty Health</option>
+                <option value="61">Nifty CPSE</option>
+                <option value="50">Nifty Media</option>
+                <option value="38">Nifty Energy</option>
+                <option value="39">Nifty FMCG</option>
+                <option value="42">Nifty PSE</option>
+                <option value="41">Nifty Pharma</option>
+                <option value="35">Nifty Infra</option>
+                <option value="34">Nifty Realty</option>
+                <option value="112">Nifty Quality 30</option>
+            </select>
+        </div>
+        <div class="sub-dropdown">
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+                <option value="9">Losers ▼</option>
+                <option value="10">Gainers ▲</option>
+                <option value="11" selected="">Stock name</option>
+                <option value="12">Market cap</option>
+                <option value="12">Vol * Price</option>
+            </select>
+        </div>
     </div>
-    <div id="table-list"></div>
-    <div id="search-container">
-      <div id="search-box">
-        <input type="text" id="search-input" placeholder="Search...">
-        <span id="search-icon">🔍</span>
-      </div>
-      <div id="search-result-container">
-        <span class="close-modal" id="close-modal"></span>
-        <ul id="results-list"></ul>
-      </div>
+    <div id="analyze-table-list"></div>
     </div>
-    <label class="switch">
-      <input type="checkbox" id="toggleSwitch">
-      <span class="slider round"></span>
-    </label>
-    <div id="main-graph" data-token= "" style="display: none;">
-      <div id="control-bar">
+    <div id="home-container">
+      <div id="depth-toolbar">
+        <span><label for="enable-checkbox">Depth</label><input type="checkbox" id="enable-checkbox"></span>
+        <span><label for="enable-checkbox">Show</label><input type="checkbox" id="enable-show-hide"></span>
+        <span><button id="show-orders-button" onclick="showPnL()">PnL</button></span>
+        <span><button id="clear-button">Clear</button></span>
+        <span><button id="save-button" onclick="saveFile()">Download</button></span>
         <span>
-          <select name="timeframe" id="timeframe" onchange="onTimeframeChange(this.value)">
-            <option value="1" selected="">1d</option>
-            <option value="1w">1w</option>
-            <option value="1m">1m</option>
-            <option value="1y">1y</option>
-          </select>
+          <button id="custom-file-upload-button" class="custom-file-upload">File</button>
+          <input type="file" id="file-input" accept=".json" style="display: none;">
         </span>
-        <label class="checkbox-container">
-          <span>Tooltip</span>
-          <input type="checkbox" id="tooltip-toggle">
-          <span class="checkmark"></span>
-        </label>
-        <label class="checkbox-container">
-          <span>Vol</span>
-          <input type="checkbox" id="volume-axis-toggle">
-          <span class="checkmark"></span>
-        </label>
-        <label class="checkbox-container">
-          <span>Fill</span>
-          <input type="checkbox" id="gap-toggle">
-          <span class="checkmark"></span>
-        </label>
-        <label class="checkbox-container">
-          <span>Live</span>
-          <input type="checkbox" id="live-toggle">
-          <span class="checkmark"></span>
-        </label>
-        <label class="checkbox-container"><span onclick="getCandlestickChartData()">&#x21bb;</span></label>
-        <div class="close-modal" id="candle-graph-close"></div>
       </div>
-      <div class="view-bar">
-        <label>
-          <span id="stock-name"></span>
-        </label>
-        <label>
-          <span>Price: </span>
-          <span id="current-price">248.10</span>
-        </label>
-        <label>
-          <span>Vol: </span>
-          <span id="current-vol">32346</span>
-        </label>
+      <div id="table-list"></div>
+      <div id="search-container">
+        <div id="search-box">
+          <input type="text" id="search-input" placeholder="Search...">
+          <span id="search-icon">🔍</span>
+        </div>
+        <div id="search-result-container">
+          <span class="close-modal" id="close-modal"></span>
+          <ul id="results-list"></ul>
+        </div>
       </div>
-      <div id="candle-stick"><canvas id="candlestickChart"></canvas></div>
-      <div class="slidecontainer">
-        <div class="graph-slider-text"><span>Candle number limit: </span><span id="candle-number">20</span></div>
-        <input type="range" min="20" max="3000" value="100" class="graph-slider" id="candle-range">
+      <label class="switch">
+        <input type="checkbox" id="toggleSwitch">
+        <span class="slider round"></span>
+      </label>
+      <div id="main-graph" data-token= "" style="display: none;">
+        <div id="control-bar">
+          <span>
+            <select name="timeframe" id="timeframe" onchange="onTimeframeChange(this.value)">
+              <option value="1" selected="">1d</option>
+              <option value="1w">1w</option>
+              <option value="1m">1m</option>
+              <option value="1y">1y</option>
+            </select>
+          </span>
+          <label class="checkbox-container">
+            <span>Tooltip</span>
+            <input type="checkbox" id="tooltip-toggle">
+            <span class="checkmark"></span>
+          </label>
+          <label class="checkbox-container">
+            <span>Vol</span>
+            <input type="checkbox" id="volume-axis-toggle">
+            <span class="checkmark"></span>
+          </label>
+          <label class="checkbox-container">
+            <span>Fill</span>
+            <input type="checkbox" id="gap-toggle">
+            <span class="checkmark"></span>
+          </label>
+          <label class="checkbox-container">
+            <span>Live</span>
+            <input type="checkbox" id="live-toggle">
+            <span class="checkmark"></span>
+          </label>
+          <label class="checkbox-container"><span onclick="getCandlestickChartData()">&#x21bb;</span></label>
+          <div class="close-modal" id="candle-graph-close"></div>
+        </div>
+        <div class="view-bar">
+          <label>
+            <span id="stock-name"></span>
+          </label>
+          <label>
+            <span>Price: </span>
+            <span id="current-price">248.10</span>
+          </label>
+          <label>
+            <span>Vol: </span>
+            <span id="current-vol">32346</span>
+          </label>
+        </div>
+        <div id="candle-stick"><canvas id="candlestickChart"></canvas></div>
+        <div class="slidecontainer">
+          <div class="graph-slider-text"><span>Candle number limit: </span><span id="candle-number">20</span></div>
+          <input type="range" min="20" max="3000" value="100" class="graph-slider" id="candle-range">
+        </div>
       </div>
-    </div>
-    <div id="details-list"></div>
-    <ul id="trade-list"></ul>
-    <div class="orders-list">
-      <div id="nifty-tag"></div>
-      <div id="orders-tag"></div>
-      <h5>Place order:</h5>
-      <div class="place-order-list" id="place-order-list">
-        <button id="blank-order-btn">Create Blank order</button>
-      </div>
-      <p id="msg">Success</p>
-      <div id="position"></div>
-      <div class="buy-order-list" id="buy-order-list">
-        <h5>Buy orders:</h5>
-      </div>
-      <div class="sell-order-list" id="sell-order-list">
-        <h5>Sell orders:</h5>
-      </div>
-      <div class="other-order-list" id="other-order-list">
-        <h5>Other orders:</h5>
+      <div id="details-list"></div>
+      <ul id="trade-list"></ul>
+      <div class="orders-list">
+        <div id="nifty-tag"></div>
+        <div id="orders-tag"></div>
+        <h5>Place order:</h5>
+        <div class="place-order-list" id="place-order-list">
+          <button id="blank-order-btn">Create Blank order</button>
+        </div>
+        <p id="msg">Success</p>
+        <div id="position"></div>
+        <div class="buy-order-list" id="buy-order-list">
+          <h5>Buy orders:</h5>
+        </div>
+        <div class="sell-order-list" id="sell-order-list">
+          <h5>Sell orders:</h5>
+        </div>
+        <div class="other-order-list" id="other-order-list">
+          <h5>Other orders:</h5>
+        </div>
       </div>
     </div>
   </div>
@@ -134,5 +186,6 @@
   <script src="./automation/analyze.js"></script>
   <script src="./js/chartPage.js"></script>
   <script src="./js/index.js"></script>
+  <script src="./js/multiTab.js"></script>
 </body>
 </html>
