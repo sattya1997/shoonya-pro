@@ -72,6 +72,11 @@
           <span class="checkmark"></span>
         </label>
         <label class="checkbox-container">
+          <span>Vol</span>
+          <input type="checkbox" id="volume-axis-toggle">
+          <span class="checkmark"></span>
+        </label>
+        <label class="checkbox-container">
           <span>Fill</span>
           <input type="checkbox" id="gap-toggle">
           <span class="checkmark"></span>
@@ -86,11 +91,14 @@
       </div>
       <div class="view-bar">
         <label>
-          <span>Current price: </span>
+          <span id="stock-name"></span>
+        </label>
+        <label>
+          <span>Price: </span>
           <span id="current-price">248.10</span>
         </label>
         <label>
-          <span>Current vol: </span>
+          <span>Vol: </span>
           <span id="current-vol">32346</span>
         </label>
       </div>

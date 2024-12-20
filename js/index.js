@@ -222,9 +222,10 @@ function closeCard(token) {
 }
 
 function createStockCard(data) {
+  console.log(data)
   const detailsList = document.getElementById("details-list");
   const goToChartPage = document.createElement("div");
-  goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" onclick="setData(${data.token})"><img src="./icons/stockChart.png"></a>`;
+  goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" data-name="${data.tsym.split('-')[0]}" onclick="setData(${data.token}, this)"><img src="./icons/stockChart.png"></a>`;
   goToChartPage.id = "card-header-btns";
   const cardCloseBtn = document.createElement("div");
   cardCloseBtn.classList.add("close-modal");
@@ -340,7 +341,16 @@ function createStockCard(data) {
   updateCardBar(cardElementForBar, data.o, data.lp, data.h, data.l);
 }
 
-function setData(symbol) {
+function setData(symbol, stockElement) {
+  const popup = document.getElementById("dynamic-popup");
+  const stockName = stockElement.dataset.name;
+  if (popup) {
+    popup.remove();
+  }
+  if (stockName && stockName.length > 0) {
+    document.getElementById('stock-name').innerHTML = stockName;
+  }
+  
   Chart.register(ChartDataLabels);
   stockSymbol = symbol;
   const element = document.getElementById('main-graph');

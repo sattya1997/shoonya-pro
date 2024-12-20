@@ -7,19 +7,33 @@ var chart2 = new Chart(ctx2, {
     labels: [],
     datasets: [
       {
-        label: "Stock Price",
+        label: "Price",
         data: [],
         borderColor: "rgb(51, 255, 64)",
         borderWidth: 1.5,
         fill: true,
-        backgroundColor: "#6185cf",
+        backgroundColor: "rgba(0,0,0,0)",
         pointRadius: 0,
         yAxisID: "price-axis",
+      },
+      {
+        type: "bar",
+        label: "Volume",
+        data: [],
+        yAxisID: "volume-axis",
+        backgroundColor: "rgb(255, 255, 255)",
+        barPercentage: 0.5,
+        parsing: {
+          yAxisKey: "y",
+        },
       },
     ],
   },
   options: {
     animation: false,
+    scales: {
+      "volume-axis": { display: false, beginAtZero: true, position: "right" },
+    },
     plugins: {
       datalabels: {
         align: "right",
@@ -30,7 +44,7 @@ var chart2 = new Chart(ctx2, {
         color: "rgba(255, 255, 255, 0.78)",
         font: { weight: "bold" },
         formatter: function (value, context) {
-          return '';
+          return "";
         },
       },
     },
@@ -453,7 +467,7 @@ function showPopup(orderTag) {
     <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
     <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
     <button style="background-color: #9e5fa9;" onclick="addToDetailsList('${tokenId}')">Card</button>
-    <button style="background-color: #02c209;" onclick="setData(${tokenId})">Candle</button>
+    <button style="background-color: #02c209;" data-name=" ${name}" onclick="setData(${tokenId}, this)">Candle</button>
   `;
 
   // Position the popup
@@ -618,6 +632,7 @@ async function getChartData(tokenId) {
       }));
       times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
       prices = graphData.map(item => item.c);
+      volumes = graphData.map(item => item.v);
       createGraph();
     }
   })
@@ -629,6 +644,7 @@ async function getChartData(tokenId) {
 function createGraph() {
   chart2.data.labels = times;
   chart2.data.datasets[0].data = prices;
+  chart2.data.datasets[1].data = volumes;
   var newPrice = prices[prices.length-1];
   chart2.options.plugins.datalabels.formatter = function(value, context) {
     const datasetIndex = context.datasetIndex;

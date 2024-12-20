@@ -51,18 +51,19 @@ Chart.register(ChartDataLabels);
 var chart = new Chart(ctx, {
   type: "candlestick",
   data: {
+    labels: [],
     datasets: [
       {
-        label: stockSymbol,
+        label: "price",
         data: candlestickData,
-        yAxisID: "price-axis",
+        yAxisID: "priceAxis",
         backgroundColor: "rgba(75, 192, 192, 1)",
       },
       {
         type: "bar",
         label: "Volume",
         data: volumeData,
-        yAxisID: "volume-axis",
+        yAxisID: "volumeAxis",
         backgroundColor: "rgba(0, 0, 255, 0.35)",
         barPercentage: 0.35,
         parsing: {
@@ -74,25 +75,17 @@ var chart = new Chart(ctx, {
   options: {
     animation: false,
     scales: {
-      "price-axis": {
-        type: "time",
-        time: {
-          unit: "minute",
-          tooltipFormat: "HH:mm",
-        },
-      },
-      "volume-axis": {
+      "priceAxis": {
         type: "linear",
-        display: false,
-        grid: {
-          drawOnChartArea: false,
-        },
-        min: 0,
-        grace: "5%",
-        afterFit: (scaleInstance) => {
-          scaleInstance.height = scaleInstance.height * 0.3;
-        },
+        position: "left",
+        beginAtZero: true
       },
+      "volumeAxis": {
+        type: "linear",
+        position: "right",
+        display: false, // Hide the volume y-axis
+        beginAtZero: true,
+      }
     },
     plugins: {
       zoom: zoomOptions,
@@ -109,7 +102,7 @@ var chart = new Chart(ctx, {
         color: "white",
         font: { weight: "bold" },
         formatter: function (value, context) {
-          return '';
+          return "";
         },
       },
     },
@@ -164,6 +157,7 @@ async function getCandlestickChartData() {
       const stockData = res.data;
       candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
       candlestickData = candlestickData.reverse();
+      var newTimes = [];
       var newCandlestickData = [];
       var newVolumeData = [];
       for (let index = 0; index < candlestickData.length; index++) {
@@ -179,7 +173,9 @@ async function getCandlestickChartData() {
           x: item.t,
           y: item.v,
         });
+        newTimes.push(item.t)
       }
+      chart.data.labels = newTimes;
       chart.data.datasets[0].data = [...newCandlestickData];
       chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
       var newPrice = newCandlestickData[newCandlestickData.length - 1].c;
@@ -194,9 +190,11 @@ async function getCandlestickChartData() {
           return '';
         }
       };
+      chart.options.scales.volumeAxis.display = false;
       chart.update();
       document.getElementById("current-price").innerText = newPrice;
       document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
+
     }
   })
   .catch((error) => {
@@ -289,5 +287,10 @@ document.getElementById("gap-toggle").addEventListener("change", function () {
 document.getElementById("live-toggle").addEventListener("change", async function () {
   startFetch = !startFetch;
   await updateChart();
+  chart.update();
+});
+
+document.getElementById("volume-axis-toggle").addEventListener("change", async function () {
+  chart.options.scales.volumeAxis.display = this.checked;
   chart.update();
 });

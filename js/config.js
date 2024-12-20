@@ -61,6 +61,9 @@ var candlestickVisible = false;
 
 var candlestickData = [];
 var volumeData = [];
+var times = [];
+var prices = [];
+var volumes = [];
 
 function postRequest(route, params, usertoken = "") {
   let url = API.endpoint() + routes[route];
