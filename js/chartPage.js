@@ -63,7 +63,7 @@ var chart = new Chart(ctx, {
         label: "Volume",
         data: volumeData,
         yAxisID: "volumeAxis",
-        backgroundColor: "rgba(212, 0, 255, 0.35)",
+        backgroundColor: "rgba(124, 123, 124, 0.35)",
         barPercentage: 0.35,
         parsing: {
           yAxisKey: "y",
@@ -99,7 +99,7 @@ var chart = new Chart(ctx, {
             yMin: 0,
             yMax: 0,
             borderColor: "rgb(82, 93, 0)",
-            borderWidth: 1.5,
+            borderWidth: .3,
           },
         },
       },
@@ -228,7 +228,7 @@ async function getCandlestickChartData() {
         yMin: newPrice,
         yMax: newPrice,
         borderColor: "rgb(0, 195, 255)",
-        borderWidth: 1.5,
+        borderWidth: 0.8,
         borderDash: [5, 5],
       };
 
@@ -236,8 +236,9 @@ async function getCandlestickChartData() {
         type: "label",
         xValue: newCandlestickData[newCandlestickData.length - 1].x,
         yValue: newPrice,
-        backgroundColor: "rgba(101, 219, 255, 0.3)",
+        backgroundColor: "rgba(58, 234, 88, 0.3)",
         borderColor: "rgba(0,0,0,0)",
+        color: 'rgb(224, 210, 210)',
         borderWidth: 0.1,
         borderRadius: 3,
         content: newPrice,
@@ -265,12 +266,12 @@ function convertToMilliseconds(timeString) {
 }
 
 
-chart.config.data.datasets[0].backgroundColors = {
-  up: "#83c67e",
-  down: "#ff5d5d",
-  unchanged: "#7f5dff",
-};
-chart.config.data.datasets[0].borderColors = "rgba(55, 55, 55, .3)";
+// chart.config.data.datasets[0].backgroundColors = {
+//   up: '#01ff01',
+//   down: '#fe0000',
+//   unchanged: '#999',
+// };
+// chart.config.data.datasets[0].borderColors = "rgba(55, 55, 55, .3)";
 chart.options = {
   responsive: true,
   plugins: {
