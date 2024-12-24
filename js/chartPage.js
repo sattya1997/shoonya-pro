@@ -165,8 +165,25 @@ async function getCandlestickChartData() {
     endTime = now > marketEndTime ? marketEndTime : now;
     startTime = new Date(endTime);
   }
+  var type = document.getElementById('timeframe').value;
+  var dayValue = 0;
+  if (type != '0') {
+    if (type === "2") {
+      dayValue = 7;
+    }
+  
+    if (type === "3") {
+      dayValue = 30;
+    }
+    if (type === "4") {
+      dayValue = 180;
+    }
+    startTime.setDate(endTime.getDate() - dayValue);
+    startTime.setHours(9, 15, 0, 0);
+  } else {
+    startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
+  }
   var et = Math.floor(endTime.getTime() / 1000);
-  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
   const st = Math.floor(startTime.getTime() / 1000);
   const jData = {
     uid: uid,
@@ -180,7 +197,48 @@ async function getCandlestickChartData() {
   .then((res) => {
     if (res && res.data && res.data.length > 0) {
       const stockData = res.data;
-      candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
+      if (stockData.length > 2000) {
+        const aggregateHourly = (data) => {
+          const hourlyData = [];
+          for (let i = 0; i < data.length; i += 60) {
+            const hourData = data.slice(i, i + 60);
+            const hourOpen = parseFloat(hourData[0].into).toFixed(2);
+            const hourHigh = Math.max(
+              ...hourData.map((d) => parseFloat(d.inth).toFixed(2))
+            );
+            const hourLow = Math.min(
+              ...hourData.map((d) => parseFloat(d.intl).toFixed(2))
+            );
+            const hourClose = parseFloat(hourData[hourData.length - 1].intc).toFixed(2);
+            const hourVolume = hourData.reduce(
+              (sum, d) => sum + parseInt(d.intv),
+              0
+            );
+            hourlyData.push({
+              time: hourData[0].time,
+              o: hourOpen,
+              h: hourHigh,
+              l: hourLow,
+              c: hourClose,
+              v: hourVolume,
+            });
+          }
+          return hourlyData;
+        };
+        const aggregatedData = aggregateHourly(stockData);
+        candlestickData = aggregatedData.map((item) => {
+          return {
+            t: convertToMilliseconds(item.time),
+            o: item.o,
+            h: item.h,
+            l: item.l,
+            c: item.c,
+            v: item.v,
+          };
+        });
+      } else {
+        candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
+      }
       candlestickData = candlestickData.reverse();
       var newTimes = [];
       var newCandlestickData = [];
@@ -284,7 +342,7 @@ chart.options = {
 chart.update();
 
 function onTimeframeChange(selectedValue) {
-  console.log("Selected timeframe:", selectedValue);
+  getCandlestickChartData();
   // can call any function here that needs the selected value
   // For example:
   // updateChart(selectedValue);

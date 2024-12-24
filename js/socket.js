@@ -587,7 +587,14 @@ function closeChart() {
 }
 
 function handleDetails(tokenId, left, top) {
-  const name = document.getElementById(`order-${tokenId}`).dataset.name;
+  document.getElementById('chart-popup-timeframe').value = "0";
+  let name = '';
+  if (tokenId === 26000) {
+    name = 'NIFTY 50'
+  } else {
+    name = document.getElementById(`order-${tokenId}`).dataset.name;
+  }
+
   chart2.options.plugins.title.text = name;
   const chartPopup = document.getElementById('chart-popup');
   chartPopup.dataset.token = tokenId;
@@ -687,7 +694,7 @@ async function getChartData(tokenId) {
     startTime = new Date(endTime);
   }
   var et = Math.floor(endTime.getTime() / 1000);
-  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
+  startTime.setMinutes(startTime.getMinutes() - 120);
   const st = Math.floor(startTime.getTime() / 1000);
   const jData = {
     uid: uid,
@@ -713,6 +720,120 @@ async function getChartData(tokenId) {
       volumes = graphData.map(item => item.v);
       volumes = [...volumes, 0, 0, 0, 0, 0];
       times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
+      createGraph();
+    }
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+  });
+}
+
+function customChartData(type) {
+  var tokenId = document.getElementById('chart-popup').dataset.token;
+  var chartData = [];
+  const userToken = localStorage.getItem("pro-userToken");
+  const now = new Date();
+  const marketEndTime = new Date(now);
+  marketEndTime.setHours(15, 30, 0, 0);
+
+  let endTime = now > marketEndTime ? marketEndTime : now;
+  let startTime = new Date(endTime);
+  let dayValue = 0;
+  if (type === "1") {
+    dayValue = 0;
+  }
+  if (type === "2") {
+    dayValue = 7;
+  }
+
+  if (type === "3") {
+    dayValue = 30;
+  }
+  if (type === "4") {
+    dayValue = 180;
+  }
+
+  if (type === "0") {
+    getChartData(tokenId);
+    return;
+  }
+  startTime.setDate(endTime.getDate() - dayValue);
+  startTime.setHours(9, 15, 0, 0);
+  var et = Math.floor(endTime.getTime() / 1000);
+  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
+  const st = Math.floor(startTime.getTime() / 1000);
+  const jData = {
+    uid: uid,
+    exch: "NSE",
+    token: tokenId.toString(),
+    st: st.toString(),
+    et: et.toString()
+  }
+  const jKey = userToken;
+  postRequest("TPSeries", jData, jKey)
+  .then((res) => {
+    if (res && res.data && res.data.length > 0) {
+      const stockData = res.data;
+      if (stockData.length > 2000) {
+        const aggregateHourly = (data) => {
+          const hourlyData = [];
+          for (let i = 0; i < data.length; i += 60) {
+            const hourData = data.slice(i, i + 60);
+            const hourAvg = hourData.reduce((sum, d) => {
+              const intc = parseInt(d.intc, 10);
+              return sum + (isNaN(intc) ? 0 : intc);
+            }, 0) / hourData.length;
+            const hourSum = hourData.reduce((sum, d) => {
+              const intv = parseInt(d.intv, 10);
+              return sum + (isNaN(intv) ? 0 : intv);
+            }, 0);
+            hourlyData.push({ time: hourData[0].time, c: parseFloat(hourAvg).toFixed(2), v: hourSum });
+          }
+          return hourlyData;
+        };
+        const aggregatedData = aggregateHourly(stockData);
+        chartData = aggregatedData.map((item) => {
+          return { t: convertToMilliseconds(item.time), c: item.c, v: item.v };
+        });
+      } else if (stockData.length > 150 < 1000) {
+        const aggregateHourly = (data) => {
+          const hourlyData = [];
+          for (let i = 0; i < data.length; i += 10) {
+            const hourData = data.slice(i, i + 10);
+            const hourAvg = hourData.reduce((sum, d) => {
+              const intc = parseInt(d.intc, 10);
+              return sum + (isNaN(intc) ? 0 : intc);
+            }, 0) / hourData.length;
+            const hourSum = hourData.reduce((sum, d) => {
+              const intv = parseInt(d.intv, 10);
+              return sum + (isNaN(intv) ? 0 : intv);
+            }, 0);
+            hourlyData.push({ time: hourData[0].time, c: parseFloat(hourAvg).toFixed(2), v: hourSum });
+          }
+          return hourlyData;
+        };
+        const aggregatedData = aggregateHourly(stockData);
+        chartData = aggregatedData.map((item) => {
+          return { t: convertToMilliseconds(item.time), c: item.c, v: item.v };
+        });
+      } else {
+        chartData = stockData.map((item) => {
+          return { t: convertToMilliseconds(item.time), c: parseInt(item.intc, 10), v: parseInt(item.intv, 10) };
+        });
+      }
+
+      var newChartData = chartData.reverse();
+      graphData = newChartData.map((item) => ({
+        x: item.t,
+        c: item.c,
+        v: item.v,
+      }));
+
+      times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3));
+      prices = graphData.map(item => item.c);
+      volumes = graphData.map(item => item.v);
+      volumes = [...volumes, 0, 0, 0, 0, 0];
+      times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1], times[times.length - 1], times[times.length - 1]];
       createGraph();
     }
   })

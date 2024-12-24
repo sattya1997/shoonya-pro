@@ -22,7 +22,17 @@
 <body>
   <div id="chart-popup" hidden>
     <div class="drag-handle" style="padding: 1px; cursor: move; display: flex; justify-content: space-between;">
-      <span><button class="save-chart-btn" onclick="exportChart()"><i class="fas fa-download"></i></button></span> <span class="close-modal" id='cls-btn-chart'></span> </div> <canvas id="stockChart"
+      <span><button class="save-chart-btn" onclick="exportChart()"><i class="fas fa-download"></i></button></span>
+      <span>
+        <select name="timeframe" id="chart-popup-timeframe" onchange="customChartData(this.value)">
+          <option value="0" selected>2h</option>
+          <option value="1">1d</option>
+          <option value="2">1w</option>
+          <option value="3">1m</option>
+          <option value="4">6m</option>
+        </select>
+      </span>
+      <span class="close-modal" id='cls-btn-chart'></span> </div> <canvas id="stockChart"
       data-id="chart-${tokenId}"></canvas>
   </div>
   <div id="nav-bar">
@@ -113,10 +123,11 @@
         <div id="control-bar">
           <span>
             <select name="timeframe" id="timeframe" onchange="onTimeframeChange(this.value)">
-              <option value="1" selected="">1d</option>
-              <option value="1w">1w</option>
-              <option value="1m">1m</option>
-              <option value="1y">1y</option>
+              <option value="0" selected>2h</option>
+              <option value="1">1d</option>
+              <option value="2">1w</option>
+              <option value="3">1m</option>
+              <option value="4">6m</option>
             </select>
           </span>
           <label class="checkbox-container">

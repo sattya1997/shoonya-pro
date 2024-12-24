@@ -1256,9 +1256,24 @@ h5 {
 
 .save-chart-btn {
   font-size: 10px;
-  background-color: #cfcfff;
+  background-color: #9494ae;
   border: none;
   border-radius: 3px;
   padding: 1px 6px;
   cursor: pointer;
+}
+.save-chart-btn:hover {
+  background-color: #b9b9ff;
+}
+
+#chart-popup-timeframe {
+  background-color: #000000;
+  color: wheat;
+  border-color: #454545;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+#chart-popup-timeframe:hover {
+  background-color: #1f1d1d;
 }
