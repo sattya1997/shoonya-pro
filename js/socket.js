@@ -9,8 +9,8 @@ var chart2 = new Chart(ctx2, {
       {
         label: "Price",
         data: [],
-        borderColor: "rgb(51, 255, 64)",
-        borderWidth: 1.5,
+        borderColor: "rgb(173, 255, 178)",
+        borderWidth: 0.5,
         fill: true,
         backgroundColor: "rgba(0,0,0,0)",
         pointRadius: 0,
@@ -21,8 +21,8 @@ var chart2 = new Chart(ctx2, {
         label: "Volume",
         data: [],
         yAxisID: "volume-axis",
-        backgroundColor: "rgb(255, 255, 255)",
-        barPercentage: 0.5,
+        backgroundColor: "rgba(58, 222, 255, 0.52)",
+        barPercentage: 0.3,
         parsing: {
           yAxisKey: "y",
         },
@@ -31,18 +31,41 @@ var chart2 = new Chart(ctx2, {
   },
   options: {
     animation: false,
+    layout: { padding: { left: 10, right: 50 } },
     scales: {
+      "price-axis": { position: "left" },
       "volume-axis": { display: false, beginAtZero: true, position: "right" },
     },
     plugins: {
+      title: {
+        display: true,
+        text: "",
+        align: "end",
+        position: "top",
+        font: { size: 16, weight: "bold" },
+      },
+      annotation: {
+        annotations: {
+          line1: {
+            type: "line",
+            xScaleID: "x",
+            yScaleID: "price-axis",
+            yMin: 0,
+            yMax: 0,
+            borderColor: "rgb(240, 255, 128)",
+            borderWidth: 0.5,
+            borderDash: [5, 5],
+          },
+        },
+      },
       datalabels: {
         align: "right",
         anchor: "end",
-        offset: -50,
+        offset: 0,
         backgroundColor: "rgba(0, 0, 0, 0)",
         borderRadius: 4,
-        color: "rgba(255, 255, 255, 0.78)",
-        font: { weight: "bold" },
+        color: "rgba(255, 255, 255, 0.81)",
+        font: { size: "10px" },
         formatter: function (value, context) {
           return "";
         },
@@ -171,9 +194,19 @@ function updateGraph(data) {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const formattedTime = `${hours}:${minutes}`;
+    for (let index = 0; index < 5; index++) {
+      times.pop();
+      volumes.pop();
+    }
+    if (times[times.length - 1] === formattedTime) {
+      prices[times.length - 1] = data.lp;
+    } else {
+      times.push(formattedTime);
+      prices.push(data.lp);
+    }
+    volumes = [...volumes, 0, 0, 0, 0, 0];
+    times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
 
-    times.push(formattedTime);
-    prices.push(data.lp);
     chart2.data.labels = times;
     chart2.data.datasets[0].data = prices;
     var newPrice = data.lp;
@@ -188,6 +221,8 @@ function updateGraph(data) {
         return '';
       }
     };
+    chart2.options.plugins.annotation.annotations.line1.yMin = newPrice;
+    chart2.options.plugins.annotation.annotations.line1.yMax = newPrice;
     chart2.update();
   }
 }
@@ -214,19 +249,30 @@ function updateCandleStick(data) {
     }
 
     chart.data.datasets[0].data = newCandlestickData;
-    chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+    var extraVol = [];
+    const mul = 60000;
+    var extraVolSize = parseInt(newCandlestickData.length / 6);
+    for (let index = 1; index < extraVolSize; index++) {
+      extraVol.push({x: newCandlestickData[newCandlestickData.length - 1].x + index*mul,y: ''})
+    }
+    chart.data.datasets[1].data = [...newVolumeData, ...extraVol];
     var newPrice = data.lp;
     chart.options.plugins.datalabels.formatter = function(value, context) {
       const datasetIndex = context.datasetIndex;
       const dataIndex = context.dataIndex;
-      const dataLength = context.chart.data.datasets[datasetIndex].data.length;
       const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
-      if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
-        return `${newPrice}`;
-      } else {
+      if (dataIndex === 0 && datasetType === 'bar') {
+        return `${newVolumeData[0].y}`
+      }
+      else {
         return '';
       }
     };
+    chart.options.plugins.annotation.annotations.line1.yMin = newPrice;
+    chart.options.plugins.annotation.annotations.line1.yMax = newPrice;
+    chart.options.plugins.annotation.annotations.label1.content = newPrice;
+    chart.options.plugins.annotation.annotations.label1.xValue = newCandlestickData[newCandlestickData.length - 1].x;
+    chart.options.plugins.annotation.annotations.label1.yValue = newPrice;
     chart.update();
     document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
     document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
@@ -541,12 +587,24 @@ function closeChart() {
 }
 
 function handleDetails(tokenId, left, top) {
+  const name = document.getElementById(`order-${tokenId}`).dataset.name;
+  chart2.options.plugins.title.text = name;
   const chartPopup = document.getElementById('chart-popup');
   chartPopup.dataset.token = tokenId;
   chartPopup.style.top = `${top}px`;
   chartPopup.hidden = false;
-  chartPopup.style.minWidth = '350px';
-  chartPopup.style.maxHeight = '180px'
+  var eWidth = window.innerWidth;
+  if (eWidth > 450) {
+    eWidth = eWidth  * 70/100;
+  } else {
+    eWidth = 350;
+  }
+
+  if (eWidth > 550) {
+    eWidth = 500;
+  }
+  chartPopup.style.minWidth = eWidth+'px';
+  //chartPopup.style.maxHeight = '180px';
   document.getElementById('cls-btn-chart').addEventListener("click", (event) => {
     closeChart();
   });
@@ -605,11 +663,31 @@ async function getChartData(tokenId) {
   const now = new Date();
   const marketEndTime = new Date(now);
   marketEndTime.setHours(15, 30, 0, 0);
-  const endTime = now > marketEndTime ? marketEndTime : now;
+  const morningLimit = new Date(now); 
+  morningLimit.setHours(9, 35, 0, 0);
+  let endTime;
+  let startTime;
+  if (now < morningLimit) {
+    if (now.getDay() === 1) {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 3);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    } else {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 1);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    }
+    
+  } else {
+    endTime = now > marketEndTime ? marketEndTime : now;
+    startTime = new Date(endTime);
+  }
   var et = Math.floor(endTime.getTime() / 1000);
-
-  const startTime = new Date(endTime);
-  startTime.setMinutes(startTime.getMinutes() - parseInt(180));
+  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
   const st = Math.floor(startTime.getTime() / 1000);
   const jData = {
     uid: uid,
@@ -633,6 +711,8 @@ async function getChartData(tokenId) {
       times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
       prices = graphData.map(item => item.c);
       volumes = graphData.map(item => item.v);
+      volumes = [...volumes, 0, 0, 0, 0, 0];
+      times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
       createGraph();
     }
   })
@@ -657,6 +737,8 @@ function createGraph() {
       return '';
     }
   };
+  chart2.options.plugins.annotation.annotations.line1.yMin = newPrice;
+  chart2.options.plugins.annotation.annotations.line1.yMax = newPrice;
   chart2.update();
 }
 
@@ -963,4 +1045,12 @@ function calculateTotalPnL(orderDetailsForPnL) {
 
     return { stock: stock.stock, totalPnL: totalPnL.toFixed(2) };
   });
+}
+
+function exportChart() {
+  const link = document.createElement("a");
+  link.href = chart2.toBase64Image();
+  let date = Math.floor(Date.now() / 1000);
+  link.download = "chart"+"_"+date+".png";
+  link.click();
 }

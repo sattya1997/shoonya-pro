@@ -46,7 +46,6 @@ const zoomOptions = {
 };
 
 var ctx = document.getElementById("candlestickChart").getContext("2d");
-//Chart.register(ChartJsPluginAnnotation);
 Chart.register(ChartDataLabels);
 var chart = new Chart(ctx, {
   type: "candlestick",
@@ -64,7 +63,7 @@ var chart = new Chart(ctx, {
         label: "Volume",
         data: volumeData,
         yAxisID: "volumeAxis",
-        backgroundColor: "rgba(0, 0, 255, 0.35)",
+        backgroundColor: "rgba(212, 0, 255, 0.35)",
         barPercentage: 0.35,
         parsing: {
           yAxisKey: "y",
@@ -75,19 +74,35 @@ var chart = new Chart(ctx, {
   options: {
     animation: false,
     scales: {
-      "priceAxis": {
-        type: "linear",
-        position: "left",
-        beginAtZero: true
+      x: {
+        type: "category",
+        afterDataLimits: (scale) => {
+          scale.max = "Extra Space";
+        },
       },
-      "volumeAxis": {
-        type: "linear",
+      priceAxis: {
+        position: "left",
+      },
+      volumeAxis: {
         position: "right",
         display: false, // Hide the volume y-axis
         beginAtZero: true,
-      }
+      },
     },
     plugins: {
+      annotation: {
+        annotations: {
+          animation: false,
+          line1: {
+            type: "line",
+            yScaleID: "priceAxis",
+            yMin: 0,
+            yMax: 0,
+            borderColor: "rgb(82, 93, 0)",
+            borderWidth: 1.5,
+          },
+        },
+      },
       zoom: zoomOptions,
       backgroundColor: {},
       tooltip: {
@@ -96,7 +111,7 @@ var chart = new Chart(ctx, {
       datalabels: {
         align: "right",
         anchor: "end",
-        offset: -10,
+        offset: -50,
         backgroundColor: "rgba(0,0,0,0.8)",
         borderRadius: 4,
         color: "white",
@@ -132,10 +147,20 @@ async function getCandlestickChartData() {
   let endTime;
   let startTime;
   if (now < morningLimit) {
-    endTime = new Date(now);
-    endTime.setDate(now.getDate() - 1);
-    endTime.setHours(15, 15, 0, 0);
-    startTime = new Date(endTime);
+    if (now.getDay() === 1) {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 3);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    } else {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 1);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    }
+    
   } else {
     endTime = now > marketEndTime ? marketEndTime : now;
     startTime = new Date(endTime);
@@ -177,20 +202,49 @@ async function getCandlestickChartData() {
       }
       chart.data.labels = newTimes;
       chart.data.datasets[0].data = [...newCandlestickData];
-      chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+      var extraVolSize = parseInt(newCandlestickData.length / 6);
+      var extraVol = [];
+      const mul = 60000;
+      for (let index = 1; index < extraVolSize; index++) {
+        extraVol.push({x: newCandlestickData[newCandlestickData.length - 1].x + index*mul,y: ''})
+      }
+      chart.data.datasets[1].data = [...newVolumeData, ...extraVol];
       var newPrice = newCandlestickData[newCandlestickData.length - 1].c;
       chart.options.plugins.datalabels.formatter = function(value, context) {
         const datasetIndex = context.datasetIndex;
         const dataIndex = context.dataIndex;
-        const dataLength = context.chart.data.datasets[datasetIndex].data.length;
         const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
-        if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
-          return `${newPrice}`;
-        } else {
+        if (dataIndex === 0 && datasetType === 'bar') {
+          return `${newVolumeData[0].y}`
+        }
+        else {
           return '';
         }
       };
       chart.options.scales.volumeAxis.display = false;
+      chart.options.plugins.annotation.annotations.line1 = {
+        type: "line",
+        yScaleID: "priceAxis",
+        yMin: newPrice,
+        yMax: newPrice,
+        borderColor: "rgb(0, 195, 255)",
+        borderWidth: 1.5,
+        borderDash: [5, 5],
+      };
+
+      chart.options.plugins.annotation.annotations.label1 = {
+        type: "label",
+        xValue: newCandlestickData[newCandlestickData.length - 1].x,
+        yValue: newPrice,
+        backgroundColor: "rgba(101, 219, 255, 0.3)",
+        borderColor: "rgba(0,0,0,0)",
+        borderWidth: 0.1,
+        borderRadius: 3,
+        content: newPrice,
+        font: { size: 12 },
+        position: "center",
+        xAdjust: 33,
+      };
       chart.update();
       document.getElementById("current-price").innerText = newPrice;
       document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
@@ -294,3 +348,11 @@ document.getElementById("volume-axis-toggle").addEventListener("change", async f
   chart.options.scales.volumeAxis.display = this.checked;
   chart.update();
 });
+
+function exportCandleGraph() {
+  const link = document.createElement("a");
+  link.href = chart.toBase64Image();
+  let date = Math.floor(Date.now() / 1000);
+  link.download = "candle_chart"+"_"+date+".png";
+  link.click();
+}

@@ -9,18 +9,20 @@
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="./js/annotation.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1"></script>
   <script src="./js/chartjs-chart-financial.js" type="text/javascript"></script>
   <link rel="stylesheet" href="./style/index.css">
   <link rel="stylesheet" type="text/css" href="./style/chartPage.css">
   <link rel="stylesheet" type="text/css" href="./style/multiTab.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   
   <script src="./js/pnL.js"></script>
 </head>
 <body>
   <div id="chart-popup" hidden>
     <div class="drag-handle" style="padding: 1px; cursor: move; display: flex; justify-content: space-between;">
-      <span></span> <span class="close-modal" id='cls-btn-chart'></span> </div> <canvas id="stockChart"
+      <span><button class="save-chart-btn" onclick="exportChart()"><i class="fas fa-download"></i></button></span> <span class="close-modal" id='cls-btn-chart'></span> </div> <canvas id="stockChart"
       data-id="chart-${tokenId}"></canvas>
   </div>
   <div id="nav-bar">
@@ -137,6 +139,7 @@
             <input type="checkbox" id="live-toggle">
             <span class="checkmark"></span>
           </label>
+          <label class="checkbox-container" onclick="exportCandleGraph()"><i class="fas fa-download"></i></label>
           <label class="checkbox-container"><span onclick="getCandlestickChartData()">&#x21bb;</span></label>
           <div class="close-modal" id="candle-graph-close"></div>
         </div>
@@ -161,7 +164,7 @@
       </div>
       <div id="details-list"></div>
       <ul id="trade-list"></ul>
-      <div class="orders-list">
+      <div class="orders-list" id="main-orders-list">
         <div id="nifty-tag"></div>
         <div id="orders-tag"></div>
         <h5>Place order:</h5>
