@@ -494,11 +494,11 @@ h5 {
 }
 
 .buy-order-list h5 {
-  color: green;
+  color: #82dbcb;
 }
 
 .sell-order-list h5 {
-  color: red;
+  color: #e99090;
 }
 
 .other-order-list h5 {

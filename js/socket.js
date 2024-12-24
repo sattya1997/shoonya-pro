@@ -427,7 +427,7 @@ function createNiftyDataField(data) {
     }
 
     niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
-    niftyTag.style.backgroundColor = parseFloat(data.pc) >= 0 ? "#77d677" : "#f46c6c";
+    niftyTag.style.backgroundColor = parseFloat(data.pc) >= 0 ? "#82dbcadb" : "#e99090e6";
   }
 }
 
@@ -475,7 +475,7 @@ function createOrdersDataField(data) {
       `;
     }
     orderTag = ordersTag.querySelector("#order-" + data.tk);
-    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#77d677" : parseFloat(data.pc) < 0 ? "#f46c6c" : "#938662";
+    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#82dbcadb" : parseFloat(data.pc) < 0 ? "#e99090e6" : "#938662";
   }
 
   if (isStoreDepth) {
