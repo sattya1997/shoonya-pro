@@ -240,6 +240,7 @@ async function getCandlestickChartData() {
         candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
       }
       candlestickData = candlestickData.reverse();
+      refreshSocketCandle();
       var newTimes = [];
       var newCandlestickData = [];
       var newVolumeData = [];

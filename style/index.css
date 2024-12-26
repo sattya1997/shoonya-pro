@@ -74,6 +74,8 @@ body {
   justify-self: center;
   text-align: center;
   align-items: center;
+  height: auto;
+  width: auto;
   padding: 5px;
 }
 

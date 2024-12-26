@@ -83,7 +83,7 @@ async function searchScrip() {
                     <button class="search-list-btn" onclick="addToDetailsList('${item.token}')">Card</button>
                     <button class="search-list-btn" onclick="addToTagList('${item.token}', '${item.tsym}')">Tag</button>
                     <button data-id="btn-sell-list-${item.token}" token="${item.token}" class="cancel">Sell</button>
-                    <button style="background-color: #5bd3bb;"><a href="./chartPage.html?stockSymbol=${item.token}">Chart</a></button>
+                    <button style="background-color: #5bd3bb;" onclick="setData(${item.token}, this)"><a>Chart</a></button>
                   </span>
                 </li>
               `;
@@ -342,6 +342,8 @@ function createStockCard(data) {
 }
 
 function setData(symbol, stockElement) {
+  refreshSocketCandle();
+  refreshConfigCandleData();
   const popup = document.getElementById("dynamic-popup");
   const stockName = stockElement.dataset.name;
   if (popup) {

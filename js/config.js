@@ -146,3 +146,7 @@ function getCall(id) {
 // getCall(10).then(async (res) => {
 //   console.log(JSON.parse(res.data.contents));
 // })
+
+function refreshConfigCandleData() {
+  candlestickData = [];
+}

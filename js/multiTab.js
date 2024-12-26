@@ -29,11 +29,11 @@ function showTab(tabNumber) {
   sessionStorage.setItem('tab-number', tabNumber);
 
   if (tabNumber === 1) {
-    document.getElementById("home-container").style.display = "block";
+    document.getElementById("home").style.display = "block";
     document.getElementById("analyze-container").style.display = "none";
   } else {
     document.getElementById("analyze-container").style.display = "block";
-    document.getElementById("home-container").style.display = "none";
+    document.getElementById("home").style.display = "none";
   }
 }
 

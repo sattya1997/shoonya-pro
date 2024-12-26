@@ -1,5 +1,15 @@
 const websocketUrl = API.websocket();
 var ctx2 = document.getElementById("stockChart").getContext("2d");
+var st;
+var et;
+var tokenId;
+var retries = 0;
+
+var oldV = 0;
+var newV = 0;
+
+var socketCandle = [];
+ var isUpdated = false;
 Chart.register(ChartDataLabels);
 var chart2 = new Chart(ctx2, {
   type: "line",
@@ -228,9 +238,25 @@ function updateGraph(data) {
 }
 
 function updateCandleStick(data) {
+  if (!isUpdated && candlestickData.length > 0) {
+    candlestickData.forEach(item => {
+      socketCandle.push(item);
+    })
+    isUpdated = true;
+  }
+
+  if (socketCandle.length < 1) {
+    return;
+  }
+  
   let token = document.getElementById('main-graph').dataset.token;
   if (data.tk === token) {
-    var newCandlestickData = candlestickData.map((item) => ({
+    if (data.v && oldV < 1) {
+      oldV = data.v;
+    } else if (data.v && oldV > 0) {
+      newV = parseInt(data.v) - oldV;
+    }
+    var newCandlestickData = socketCandle.map((item) => ({
       x: item.t,
       o: item.o,
       h: item.h,
@@ -238,20 +264,62 @@ function updateCandleStick(data) {
       c: item.c,
     }));
 
-    var newVolumeData = candlestickData.map((item) => ({
+    var newVolumeData = socketCandle.map((item) => ({
       x: item.t,
-      y: item.v,
+      y: item.v ? item.v : `${0}`,
     }));
     const position = newCandlestickData.length - 1;
 
     if (data.lp) {
-      newCandlestickData[position].c = data.lp;
+      var hp = newCandlestickData[position].h;
+      var lp = newCandlestickData[position].l;
+      var newDate = new Date(data.ft * 1000);
+      
+      const minutes = newDate.getMinutes();
+      const oldDate = new Date(newCandlestickData[position].x);
+      newDate.setSeconds(oldDate.getSeconds());
+      newDate.setMilliseconds(oldDate.getMilliseconds())
+      const oldMinutes = oldDate.getMinutes();
+      if (minutes === oldMinutes) {
+        newCandlestickData[position].c = data.lp;
+        newVolumeData[position].y = newV.toString();
+        socketCandle[position].c = data.lp;
+        socketCandle[position].v = newV.toString();
+        if (parseFloat(data.lp) > parseFloat(hp)) {
+          newCandlestickData[position].h = data.lp;
+          socketCandle[position].h = data.lp;
+        }
+        if (parseFloat(data.lp) < parseFloat(lp)) {
+          newCandlestickData[position].l = data.lp;
+          socketCandle[position].l = data.lp;
+        }
+      } else {
+        const newObject = {
+          x: newDate.getTime(),
+          o: data.lp,
+          h: data.lp,
+          l: data.lp,
+          c: data.lp,
+          v: "0",
+        }
+        oldV = 0;
+        newV = 0;
+        newCandlestickData.push(newObject);
+        socketCandle.push({
+          t: newDate.getTime(),
+          o: data.lp,
+          h: data.lp,
+          l: data.lp,
+          c: data.lp,
+          v: "0",
+        });
+      }
     }
 
     chart.data.datasets[0].data = newCandlestickData;
     var extraVol = [];
     const mul = 60000;
-    var extraVolSize = parseInt(newCandlestickData.length / 6);
+    var extraVolSize = parseInt(newCandlestickData.length / 4);
     for (let index = 1; index < extraVolSize; index++) {
       extraVol.push({x: newCandlestickData[newCandlestickData.length - 1].x + index*mul,y: ''})
     }
@@ -693,9 +761,10 @@ async function getChartData(tokenId) {
     endTime = now > marketEndTime ? marketEndTime : now;
     startTime = new Date(endTime);
   }
-  var et = Math.floor(endTime.getTime() / 1000);
+  et = Math.floor(endTime.getTime() / 1000);
   startTime.setMinutes(startTime.getMinutes() - 120);
-  const st = Math.floor(startTime.getTime() / 1000);
+  st = Math.floor(startTime.getTime() / 1000);
+
   const jData = {
     uid: uid,
     exch: "NSE",
@@ -704,9 +773,14 @@ async function getChartData(tokenId) {
     et: et.toString()
   }
   const jKey = userToken;
+  getTimeSeries(jData, jKey, startTime, tokenId);
+  retries++;
+}
+
+function getTimeSeries(jData, jKey, startTime, tokenId) {
   postRequest("TPSeries", jData, jKey)
   .then((res) => {
-    if (res && res.data && res.data.length > 0) {
+    if (res && res.data && res.data.length > 60) {
       const stockData = res.data;
       chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv }; });
       var newChartData = chartData.reverse();
@@ -721,6 +795,22 @@ async function getChartData(tokenId) {
       volumes = [...volumes, 0, 0, 0, 0, 0];
       times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
       createGraph();
+    } else {
+      if (retries < 5) {
+        startTime.setDate(startTime.getDate() - 1);
+        startTime.setHours(15, 0, 0, 0);
+        st = Math.floor(startTime.getTime() / 1000);
+        const jData = {
+          uid: uid,
+          exch: "NSE",
+          token: tokenId.toString(),
+          st: st.toString(),
+          et: et.toString()
+        }
+        console.log(tokenId);
+        setTimeout(() => { getTimeSeries(jData, jKey, startTime, tokenId); }, 100);
+        retries++;
+      }
     }
   })
   .catch((error) => {
@@ -1174,4 +1264,9 @@ function exportChart() {
   let date = Math.floor(Date.now() / 1000);
   link.download = "chart"+"_"+date+".png";
   link.click();
+}
+
+function refreshSocketCandle() {
+  socketCandle = [];
+  isUpdated = false;
 }
