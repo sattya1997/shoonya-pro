@@ -1002,10 +1002,6 @@ function getOrders() {
   res
     .then((response) => {
       const data = response.data;
-      document.getElementById("buy-order-list").innerHTML =
-        "<h5>Buy orders:</h5>";
-      document.getElementById("sell-order-list").innerHTML =
-        "<h5>Sell orders:</h5>";
       var buyOrderCount = 0;
       var sellOrderCount = 0;
       var otherOrderCount = 0;
@@ -1062,20 +1058,22 @@ function getOrders() {
         const totalPnLResults = calculateTotalPnL(orderDetailsForPnL);
         if (totalPnLResults.length > 0) {
           const positionElement = document.getElementById("position");
-          let string = '<ul>';
+          let string = '';
           totalPnLResults.forEach(result => {
-            let token =  result.stock;
+            let token = result.stock;
             const element = document.querySelector(`[data-pos-id="${token}"]`);
             const name = element.dataset.posTsym;
             let pnl = result.totalPnL;
-            const color = pnl > 0 ? '#45f8f8':pnl < 0? '#ff9898': '#d2d2d2';
-            pnl = pnl > 0? `+${pnl}` : pnl
+            const color = pnl > 0 ? '#45f8f8' : pnl < 0 ? '#ff9898' : '#d2d2d2';
+            pnl = pnl > 0 ? `+${pnl}` : pnl;
             string = string + `
-              <li><span>${name}:</span><span style="color:${color}">${pnl}</span></li>
-            ` ;
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>${name}:&nbsp&nbsp</span><span style="color:${color}">${pnl}</span>
+              </div>
+            `;
           });
           positionElement.innerHTML = string;
-        }
+        }        
       }
     })
     .catch((err) => {
@@ -1143,10 +1141,6 @@ function generateOrderDetails(order, id, count) {
       button.disabled = disabled;
       if (disabled) button.classList.add("disabled-button");
     });
-  }
-
-  if (count === 1) {
-    list.innerHTML = id === "buy-order-list" ? "<h5>Buy orders:</h5>" : id === "sell-order-list" ? "<h5>Sell orders:</h5>" : "<h5>Other orders:</h5>";
   }
 
   list.appendChild(singleOrder);

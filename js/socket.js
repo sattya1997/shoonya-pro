@@ -131,17 +131,21 @@ function connectWebSocket() {
     websocket.send(JSON.stringify(connectRequest));
     setTimeout(() => {
       subscribeTouchline(["NSE|26000"]);
-      Object.keys(orderNames).forEach((orderToken) => {
-        subscribeTouchline([`NSE|${orderToken}`]);
-      });
 
-      for (let index = 0; index < stockTokenList.length; index++) {
-        const token = stockTokenList[index];
-        const name = stockSymbolList[index]
-        orderNames[token] = name;
-        subscribeTouchline([`NSE|${token}`]);
-      }
-    }, 3000);
+      const jData = {
+        uid: uid,
+        wlname: "pro",
+      };
+      const jKey = userToken;
+      const res = postRequest("watchlist", jData, jKey);
+      res.then((response) => {
+        const watchList = response.data.values;
+        watchList.forEach(item => {
+          orderNames[item.token] = item.tsym;
+          subscribeTouchline([`NSE|${item.token}`]);
+        })
+      });
+    }, 2000);
   };
 
   websocket.onmessage = function (event) {
