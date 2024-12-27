@@ -1307,3 +1307,127 @@ h5 {
   filter: blur(3px);
   opacity: .3;
 }
+
+.popup-overlay-watch-list {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+#edit-watch-list {
+  width: 28px;
+  background-color: #232f46f5;
+  border: none;
+  height: 22px;
+  margin-top: 8px;
+  margin-left: 10px;
+  border-radius: 5px;
+}
+
+#edit-watch-list:hover {
+  background-color: #4a6393f5;
+}
+
+#edit-watch-list :active {
+  transform: scale(1.1);
+}
+
+#popup-watch-list {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #141313;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid;
+  box-shadow: 4px 3px 10px rgb(251 219 219 / 18%);
+  z-index: 1000;
+  text-align: center;
+  color: #ed8484;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: monospace;
+  width: 90%;
+  max-width: 280px;
+  height: 400px;
+  overflow-y: scroll;
+}
+
+#search-bar {
+  width: 70%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #000000;
+  color: whitesmoke;
+}
+
+.watch-list-stock-item {
+  display: flex;
+  justify-content: center;
+  background-color: #151b23;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 3px;
+  font-size: small;
+}
+
+.watch-list-stock-item:last-child {
+  border-bottom: none;
+}
+
+.watch-list-stock-item span {
+  flex: 1;
+}
+
+#watch-search-container {
+  position: absolute;
+  top: 65px;
+  left: 0;
+  background-color: #151b23;
+  border: 1px solid #323232;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 0 5px 0 5px;
+  overflow-x: hidden;
+  z-index: 1051;
+  min-height: 50px;
+  min-width: 95%;
+  display: none;
+}
+
+.watch-result-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: 1px solid #e1e1e1;
+  padding: 13px 7px;
+  list-style-type: none;
+}
+
+.watch-result-item button {
+  padding: 2px 4px;
+  border: none;
+  border-radius: 5px;
+  background-color: #212224;
+  color: rgb(92, 206, 86);
+}
+
+.watch-result-item button:hover {
+  background-color: #569c8e;
+  transform: scale(0.9);
+  color: black;
+}
+
+.watch-result-item button:after {
+  transform: scale(1.05);
+}

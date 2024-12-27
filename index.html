@@ -26,6 +26,10 @@
         class="cancel" id="cancelBtn">Cancel</button>
     </div>
   </div>
+  <div class="popup-overlay-watch-list" id="popup-overlay-watch-list">
+    <div class="popup-watch-list" id="popup-watch-list">
+    </div>
+  </div>
   <div class="body">
     <div id="chart-popup" hidden>
       <div class="drag-handle" style="padding: 1px; cursor: move; display: flex; justify-content: space-between;">
@@ -184,7 +188,9 @@
           <div id="details-list"></div>
           <ul id="trade-list"></ul>
           <div class="orders-list" id="main-orders-list">
-            <div id="nifty-tag"></div>
+            <div style="display: flex;"><div id="nifty-tag"></div>
+            <button id="edit-watch-list" onclick="showWatchList()"><i class="fa-solid fa-pen-to-square fa-fade"></i></button></div>
+            
             <div id="orders-tag"></div>
             <h5>Place order:</h5>
             <div class="place-order-list" id="place-order-list">

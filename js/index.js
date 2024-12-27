@@ -1352,3 +1352,142 @@ cancelBtn.addEventListener("click", () => {
   popupOverlay.style.display = "none";
   body.classList.remove("blur");
 });
+
+function showWatchList() {
+  document.getElementById("popup-overlay-watch-list").style.display = "block";
+  body.classList.add("blur");
+  const jData = {
+    uid: uid,
+    wlname: "pro",
+  };
+  const jKey = userToken;
+  const res = postRequest("watchlist", jData, jKey);
+  res.then((response) => {
+    const watchList = response.data.values;
+    const watchListElement = document.getElementById("popup-watch-list");
+    watchListElement.innerHTML = "";
+    const renderStockList = (stocks) => {
+      watchListElement.innerHTML = `
+        <div style="display:flex;justify-content: flex-end;"><span class="close-modal" onclick="closeWatchList()"></span></div>
+        <div style="position:relative">
+        <input type="text" id="search-bar" placeholder="Search for stocks..." onkeyup="delayStocks(this)">
+        </div>
+        <div id="watch-search-container"></div>
+        ${stocks.map(stock => `
+          <div class="watch-list-stock-item" data-token="${stock.token}">
+            <span>${stock.tsym}</span>
+            <div style="display:flex;justify-content: flex-end; margin-top: 4px;"><span class="close-modal" onclick="removeStock('${stock.token}')"></span></div> 
+          </div>
+        `).join('')}
+      `;
+    };
+    renderStockList(watchList);
+  });
+}
+
+function closeWatchList() {
+  document.getElementById("popup-overlay-watch-list").style.display = "none";
+  body.classList.remove("blur");
+}
+
+let watchSearchTimeout;
+
+function delayStocks (event) {
+  if (event.key === "Enter") {
+    filterStocks();
+  } else {
+    clearTimeout(watchSearchTimeout);
+    watchSearchTimeout = setTimeout(() => {
+      filterStocks();
+    }, 500);
+  }
+}
+
+function filterStocks() {
+  const searchTerm = document.getElementById("search-bar").value.toLowerCase();
+  if (searchTerm) {
+    const jData = {
+      uid: uid,
+      stext: searchTerm.toString(),
+      exch: ["NSE", "BSE"],
+    };
+    const jKey = userToken;
+
+    const res = postRequest("searchscrip", jData, jKey);
+    const resultsList = document.getElementById("watch-search-container");
+    res.then((response) => {
+      const data = response.data;
+      if (data.stat === "Ok") {
+        resultsList.innerHTML = "";
+        htmlData = "";
+        data.values.forEach((item) => {
+          htmlData += `
+                <li class="watch-result-item">
+                  <span>${item.exch}: ${item.tsym} - ${item.token}</span>
+                  <button onclick="addStock(${item.token}, event)">Add</button>
+                </li>
+              `;
+        });
+        resultsList.innerHTML = htmlData;
+      }
+    });
+    resultsList.style.display = "block";
+  }
+}
+
+function addStock(token, event) {
+  const jData = {
+    uid: uid,
+    wlname: "pro",
+    scrips: `NSE|${token}`,
+  };
+  const jKey = userToken;
+  const res = postRequest("watchlist_add", jData, jKey);
+  res.then((response) => {
+    if (response.stat === "Ok");
+    document.getElementById("watch-search-container").style.display = "none";
+    showWatchList();
+    const buttonElement = event.target
+    const stockItemElement = buttonElement.closest('.watch-result-item');
+    const stockNameElement = stockItemElement.querySelector('span');
+    const stockName = stockNameElement.textContent;
+    orderNames[`${token}`] = stockName.split(" ")[1].split('-')[0];
+    subscribeTouchline([`NSE|${token}`]);
+  })
+}
+
+function removeStock(token) {
+  const stockItem = document.querySelector(`[data-token="${token}"]`);
+  if (stockItem) {
+    const jData = {
+      uid: uid,
+      wlname: "pro",
+      scrips: `NSE|${token}`,
+    };
+    const jKey = userToken;
+    const res = postRequest("watchlist_delete", jData, jKey);
+    res.then((response) => {
+      if (response.stat === "Ok");
+      stockItem.remove();
+      unsubscribeTouchline([`NSE|${token}`])
+    })
+  }
+}
+
+function submitWatchlist() {
+  const stockItems = document.querySelectorAll('.stock-item');
+  const newWatchlist = Array.from(stockItems).map(item => {
+    return {
+      token: item.getAttribute('data-token'),
+      tsym: item.querySelector('span').textContent
+    };
+  });
+  
+  // Submit the new watchlist
+  postRequest("saveWatchlist", { watchlist: newWatchlist }, jKey).then(response => {
+    alert('Watchlist saved successfully!');
+  }).catch(error => {
+    console.error('Error saving watchlist:', error);
+  });
+}
+
