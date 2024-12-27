@@ -63,7 +63,7 @@ var chart = new Chart(ctx, {
         label: "Volume",
         data: volumeData,
         yAxisID: "volumeAxis",
-        backgroundColor: "rgba(124, 123, 124, 0.35)",
+        backgroundColor: "rgba(140, 132, 255, 0.29)",
         barPercentage: 0.35,
         parsing: {
           yAxisKey: "y",
@@ -79,14 +79,17 @@ var chart = new Chart(ctx, {
         afterDataLimits: (scale) => {
           scale.max = "Extra Space";
         },
+        backgroundColor: "white",
       },
       priceAxis: {
         position: "left",
+        backgroundColor: "white",
       },
       volumeAxis: {
         position: "right",
         display: false, // Hide the volume y-axis
         beginAtZero: true,
+        backgroundColor: "red",
       },
     },
     plugins: {
@@ -203,87 +206,68 @@ async function getCandlestickChartData() {
           for (let i = 0; i < data.length; i += 60) {
             const hourData = data.slice(i, i + 60);
             const hourOpen = parseFloat(hourData[0].into).toFixed(2);
-            const hourHigh = Math.max(
-              ...hourData.map((d) => parseFloat(d.inth).toFixed(2))
-            );
-            const hourLow = Math.min(
-              ...hourData.map((d) => parseFloat(d.intl).toFixed(2))
-            );
+            const hourHigh = Math.max(...hourData.map((d) => parseFloat(d.inth).toFixed(2)));
+            const hourLow = Math.min(...hourData.map((d) => parseFloat(d.intl).toFixed(2)));
             const hourClose = parseFloat(hourData[hourData.length - 1].intc).toFixed(2);
-            const hourVolume = hourData.reduce(
-              (sum, d) => sum + parseInt(d.intv),
-              0
-            );
-            hourlyData.push({
-              time: hourData[0].time,
-              o: hourOpen,
-              h: hourHigh,
-              l: hourLow,
-              c: hourClose,
-              v: hourVolume,
-              vol: "0"
-            });
+            const hourVolume = hourData.reduce((sum, d) => sum + parseInt(d.intv), 0);
+            hourlyData.push({ time: hourData[0].time, o: hourOpen, h: hourHigh, l: hourLow, c: hourClose, v: hourVolume, vol: "0" });
           }
           return hourlyData;
         };
         const aggregatedData = aggregateHourly(stockData);
-        a
         candlestickData = aggregatedData.map((item) => {
-          return {
-            t: convertToMilliseconds(item.time),
-            o: item.o,
-            h: item.h,
-            l: item.l,
-            c: item.c,
-            v: item.v,
-          };
+          return { t: convertToMilliseconds(item.time), o: item.o, h: item.h, l: item.l, c: item.c, v: item.v };
         });
       } else {
         candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv, vol: item.v }; });
       }
       candlestickData = candlestickData.reverse();
-      candlestickData[candlestickData.length -1].vol = stockData[0].v;
+      candlestickData[candlestickData.length - 1].vol = stockData[0].v;
       refreshSocketCandle();
+      
       var newTimes = [];
       var newCandlestickData = [];
       var newVolumeData = [];
+      var volumeColors = []; // Array to hold dynamic colors for volume bars
+      
       for (let index = 0; index < candlestickData.length; index++) {
         const item = candlestickData[index];
-        newCandlestickData.push({
-          x: item.t,
-          o: item.o,
-          h: item.h,
-          l: item.l,
-          c: item.c,
-        });
-        newVolumeData.push({
-          x: item.t,
-          y: item.v,
-        });
-        newTimes.push(item.t)
+        newCandlestickData.push({ x: item.t, o: item.o, h: item.h, l: item.l, c: item.c });
+        newVolumeData.push({ x: item.t, y: item.v });
+        
+        // Determine color based on whether volume increased or decreased
+        if (index > 0 && item.v > candlestickData[index - 1].v) {
+          volumeColors.push('rgba(75, 192, 192, .35)');
+        } else {
+          volumeColors.push('rgba(255, 99, 132, .35)');
+        }
+        newTimes.push(item.t);
       }
       chart.data.labels = newTimes;
       chart.data.datasets[0].data = [...newCandlestickData];
-      var extraVolSize = parseInt(newCandlestickData.length / 4)+1;
+      chart.data.datasets[1].data = [...newVolumeData];
+      chart.data.datasets[1].backgroundColor = volumeColors;
+
+      var extraVolSize = parseInt(newCandlestickData.length / 4) + 1;
       var extraVol = [];
       const mul = 60000;
       for (let index = 1; index < extraVolSize; index++) {
-        extraVol.push({x: newCandlestickData[newCandlestickData.length - 1].x + index*mul,y: ''})
+        extraVol.push({ x: newCandlestickData[newCandlestickData.length - 1].x + index * mul, y: '' });
       }
       chart.data.datasets[1].data = [...newVolumeData, ...extraVol];
+      
       var newPrice = newCandlestickData[newCandlestickData.length - 1].c;
       chart.options.plugins.datalabels.formatter = function(value, context) {
         const datasetIndex = context.datasetIndex;
         const dataIndex = context.dataIndex;
         const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
         if (dataIndex === 0 && datasetType === 'bar') {
-          return `${newVolumeData[0].y}`
-        }
-        else {
+          return `${newVolumeData[0].y}`;
+        } else {
           return '';
         }
       };
-      chart.options.scales.volumeAxis.display = false;
+
       chart.options.plugins.annotation.annotations.line1 = {
         type: "line",
         yScaleID: "priceAxis",
@@ -308,10 +292,14 @@ async function getCandlestickChartData() {
         position: "center",
         xAdjust: 33,
       };
+
+      chart.options.scales.priceAxis.ticks.color = "rgba(205, 205, 205, 0.6)";
+      chart.options.scales.x.ticks.color = "rgba(205, 205, 205, 0.6)";
+      chart.options.scales.x.grid = { color: "rgba(173, 151, 255, 0.1)" };
+      chart.options.scales.priceAxis.grid = { color: "rgba(173, 151, 255, 0.1)" };
       chart.update();
       document.getElementById("current-price").innerText = newPrice;
       document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
-
     }
   })
   .catch((error) => {

@@ -262,21 +262,12 @@ function updateCandleStick(data) {
 
   let token = document.getElementById('main-graph').dataset.token;
   if (data.tk === token) {
-    console.log("bef "+data.v);
-    console.log(oldV)
-    console.log(newV)
     if (oldV < 1) {
       oldV = parseInt(candlestickData[candlestickData.length -1].vol);
     }
-
     if (data.v && oldV > 0) {
-      console.log("after "+data.v);
       newV = parseInt(data.v) - oldV;
-      console.log(oldV)
-      console.log(newV)
     }
-    
-
     var newCandlestickData = socketCandle.map((item) => ({
       x: item.t,
       o: item.o,
@@ -319,11 +310,6 @@ function updateCandleStick(data) {
           newVolumeData[position].y = newV.toString();
           socketCandle[position].v = newV.toString();
         }
-        // console.log(oldV)
-        // console.log(data.v)
-        // console.log(newV)
-        // console.log(newVolumeData);
-
       } else {
         const newObject = {
           x: newDate.getTime(),
@@ -1217,14 +1203,14 @@ function refreshCardData(data) {
 
   if (data.lp) {
     elements.lastPrice.textContent = data.lp;
-    elements.lastPrice.parentNode.style.color = data.lp < openPrice ? 'red' : 'green';
+    elements.lastPrice.parentNode.style.color = data.lp > openPrice ? "rgba(151, 255, 236, 0.86)" : "rgba(255, 157, 157, 0.9)";
   }
 
   if (data.pc) {
     const changeValue = openPrice + (data.pc * openPrice / 100);
     const change = (changeValue - openPrice).toFixed(2);
     elements.change.innerText = `${change} (${data.pc}%)`;
-    elements.change.parentNode.style.color = data.pc < 0 ? 'red' : 'green';
+    elements.change.parentNode.style.color = data.pc > 0 ? "rgba(151, 255, 236, 0.86)" : "rgba(255, 157, 157, 0.9)";
   }
 
   if (data.v) elements.volume.innerText = data.v;

@@ -278,7 +278,7 @@ function createStockCard(data) {
   priceInfo.innerHTML = `
     <div class="sub-info">
       <label><button data-id="btn-buy-${data.token}" token="${data.token}" class="auto">Buy</button></label>
-      <label style="color:${classValue};"><p class="fontBolder">Last Price: </p><p class="fontBolder" id="${data.token}-last-price">${data.lp}</p></label>
+      <label style="color:${classValue}"><p class="fontBolder">Last Price: </p><p class="fontBolder" id="${data.token}-last-price">${data.lp}</p></label>
       <label><p class="fontBolder">Prev close: </p><p id="${data.token}-prev-close">${data.c}</p></label>
       <label style="color:#d3d332;"><p class="fontBolder">Open: </p><p id="${data.token}-open">${data.o}</p></label>
       <label style="color:#18bc9c"><p class="fontBolder">High: </p><p id="${data.token}-high">${data.h}</p></label>
@@ -286,7 +286,7 @@ function createStockCard(data) {
     </div>
     <div class="sub-info" id="${data.token}-price-info">
       <label><button data-id="btn-sell-${data.token}" token="${data.token}" class="cancel">Sell</button></label>
-      <label style="color:${classValue};"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
+      <label style="color:${classValue}"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
       <label style="color:#7c73ff"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
       <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
       <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
