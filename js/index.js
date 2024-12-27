@@ -20,7 +20,7 @@ if (!userToken) {
     .catch((error) => {
       console.error("Error:", error);
       alert("Some errors happened. Please login again");
-      //localStorage.removeItem("pro-userToken");
+      localStorage.removeItem("pro-userToken");
       window.location.href = "./login.html";
     });
 }
@@ -196,11 +196,11 @@ async function logout() {
     .then((data) => {
       if (data.stat === "Ok") {
         //have to uncomment later
-        //localStorage.removeItem("pro-userToken");
+        localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       } else {
         alert("Session expires. Please login again.");
-        //localStorage.removeItem("pro-userToken");
+        localStorage.removeItem("pro-userToken");
         window.location.href = "login.html";
       }
     })
@@ -1240,10 +1240,10 @@ function getBalance() {
         "Cash: " + "&#8377; " + parseFloat(cashAvailable).toFixed(2);
       
       if ( value.rpnl && parseFloat(value.rpnl) > 0) {
-        document.getElementById("nav-bar-pl").style.color = "#f65454"
+        document.getElementById("nav-bar-pl").style.color = "#ff9898"
         document.getElementById("nav-bar-pl").innerHTML = "P/L: "+(0-parseFloat(value.rpnl));
       } else if (value.rpnl && parseFloat(value.rpnl) < 0) {
-        document.getElementById("nav-bar-pl").style.color = "#33e633"
+        document.getElementById("nav-bar-pl").style.color = "#45f8f8"
         document.getElementById("nav-bar-pl").innerHTML = "P/L: +"+(0-parseFloat(value.rpnl));
       } else {
         document.getElementById("nav-bar-pl").style.color = "yellow"

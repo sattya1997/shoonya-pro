@@ -430,12 +430,12 @@ function updateOrderPos(data) {
   function markAsDone(element) {
     element.dataset.posStatus = "DONE";
     element.innerText = "Done";
-    element.style.color = "green";
+    element.style.color = "#bbffbb";
   }
 
   function updatePosition(element, pos) {
     element.innerText = pos > 0 ? `+${pos}` : pos;
-    element.style.color = pos > 0 ? "green" : "red";
+    element.style.color = pos > 0 ? "#bbffbb" : "#ff9898";
   }
 }
 
@@ -595,11 +595,11 @@ function showPopup(orderTag) {
   // Update the popup content with buttons
   popup.innerHTML = `
     <p>${name}</p>
-    <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
-    <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
+    <button style="background-color: #bbffbb" onclick="handleBuy(${tokenId})">Buy</button>
+    <button style="background-color: #ff9898;" onclick="handleSell(${tokenId})">Sell</button>
     <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
     <button style="background-color: #9e5fa9;" onclick="addToDetailsList('${tokenId}')">Card</button>
-    <button style="background-color: #02c209;" data-name=" ${name}" onclick="setData(${tokenId}, this)">Candle</button>
+    <button style="background-color:rgb(155, 255, 155);" data-name=" ${name}" onclick="setData(${tokenId}, this)">Candle</button>
   `;
 
   // Position the popup
