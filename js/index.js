@@ -1068,7 +1068,7 @@ function getOrders() {
             const element = document.querySelector(`[data-pos-id="${token}"]`);
             const name = element.dataset.posTsym;
             let pnl = result.totalPnL;
-            const color = pnl > 0 ? '#3aff7d':pnl < 0? '#ff0000': '#d2d2d2';
+            const color = pnl > 0 ? '#45f8f8':pnl < 0? '#ff9898': '#d2d2d2';
             pnl = pnl > 0? `+${pnl}` : pnl
             string = string + `
               <li><span>${name}:</span><span style="color:${color}">${pnl}</span></li>
