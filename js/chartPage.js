@@ -221,11 +221,13 @@ async function getCandlestickChartData() {
               l: hourLow,
               c: hourClose,
               v: hourVolume,
+              vol: "0"
             });
           }
           return hourlyData;
         };
         const aggregatedData = aggregateHourly(stockData);
+        a
         candlestickData = aggregatedData.map((item) => {
           return {
             t: convertToMilliseconds(item.time),
@@ -237,9 +239,10 @@ async function getCandlestickChartData() {
           };
         });
       } else {
-        candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
+        candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv, vol: item.v }; });
       }
       candlestickData = candlestickData.reverse();
+      candlestickData[candlestickData.length -1].vol = stockData[0].v;
       refreshSocketCandle();
       var newTimes = [];
       var newCandlestickData = [];
@@ -261,7 +264,7 @@ async function getCandlestickChartData() {
       }
       chart.data.labels = newTimes;
       chart.data.datasets[0].data = [...newCandlestickData];
-      var extraVolSize = parseInt(newCandlestickData.length / 6);
+      var extraVolSize = parseInt(newCandlestickData.length / 4)+1;
       var extraVol = [];
       const mul = 60000;
       for (let index = 1; index < extraVolSize; index++) {

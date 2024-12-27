@@ -8,6 +8,11 @@ var retries = 0;
 var oldV = 0;
 var newV = 0;
 
+uV = 0;
+
+var oldVNormal = 0;
+var newVNormal = 0;
+
 var socketCandle = [];
  var isUpdated = false;
 Chart.register(ChartDataLabels);
@@ -200,6 +205,11 @@ function connectWebSocket() {
 function updateGraph(data) {
   let token = document.getElementById('chart-popup').dataset.token;
   if (data.tk === token) {
+    if (data.v && oldVNormal < 1) {
+      oldVNormal = parseInt(graphData[graphData.length -1].vol);
+    } else if (data.v && oldVNormal > 0) {
+      newVNormal = parseInt(data.v) - oldVNormal;
+    }
     const date = new Date(data.ft * 1000);
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -210,15 +220,20 @@ function updateGraph(data) {
     }
     if (times[times.length - 1] === formattedTime) {
       prices[times.length - 1] = data.lp;
+      volumes[times.length -1] = newVNormal.toString();
     } else {
       times.push(formattedTime);
       prices.push(data.lp);
+      volumes.push("0");
+      oldVNormal = parseInt(oldVNormal) + parseInt(newVNormal);
+      newVNormal = 0;
     }
     volumes = [...volumes, 0, 0, 0, 0, 0];
     times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
 
     chart2.data.labels = times;
     chart2.data.datasets[0].data = prices;
+    chart2.data.datasets[1].data = volumes;
     var newPrice = data.lp;
     chart2.options.plugins.datalabels.formatter = function(value, context) {
       const datasetIndex = context.datasetIndex;
@@ -245,17 +260,23 @@ function updateCandleStick(data) {
     isUpdated = true;
   }
 
-  if (socketCandle.length < 1) {
-    return;
-  }
-  
   let token = document.getElementById('main-graph').dataset.token;
   if (data.tk === token) {
-    if (data.v && oldV < 1) {
-      oldV = data.v;
-    } else if (data.v && oldV > 0) {
-      newV = parseInt(data.v) - oldV;
+    console.log("bef "+data.v);
+    console.log(oldV)
+    console.log(newV)
+    if (oldV < 1) {
+      oldV = parseInt(candlestickData[candlestickData.length -1].vol);
     }
+
+    if (data.v && oldV > 0) {
+      console.log("after "+data.v);
+      newV = parseInt(data.v) - oldV;
+      console.log(oldV)
+      console.log(newV)
+    }
+    
+
     var newCandlestickData = socketCandle.map((item) => ({
       x: item.t,
       o: item.o,
@@ -270,7 +291,7 @@ function updateCandleStick(data) {
     }));
     const position = newCandlestickData.length - 1;
 
-    if (data.lp) {
+    if (data.lp || data.v) {
       var hp = newCandlestickData[position].h;
       var lp = newCandlestickData[position].l;
       var newDate = new Date(data.ft * 1000);
@@ -281,18 +302,28 @@ function updateCandleStick(data) {
       newDate.setMilliseconds(oldDate.getMilliseconds())
       const oldMinutes = oldDate.getMinutes();
       if (minutes === oldMinutes) {
-        newCandlestickData[position].c = data.lp;
-        newVolumeData[position].y = newV.toString();
-        socketCandle[position].c = data.lp;
-        socketCandle[position].v = newV.toString();
-        if (parseFloat(data.lp) > parseFloat(hp)) {
-          newCandlestickData[position].h = data.lp;
-          socketCandle[position].h = data.lp;
+        if (data.lp) {
+          newCandlestickData[position].c = data.lp;
+          if (parseFloat(data.lp) > parseFloat(hp)) {
+            newCandlestickData[position].h = data.lp;
+            socketCandle[position].h = data.lp;
+          }
+          if (parseFloat(data.lp) < parseFloat(lp)) {
+            newCandlestickData[position].l = data.lp;
+            socketCandle[position].l = data.lp;
+            socketCandle[position].c = data.lp;
+          } 
         }
-        if (parseFloat(data.lp) < parseFloat(lp)) {
-          newCandlestickData[position].l = data.lp;
-          socketCandle[position].l = data.lp;
+        if (data.v) {
+          uV = parseInt(data.v);
+          newVolumeData[position].y = newV.toString();
+          socketCandle[position].v = newV.toString();
         }
+        // console.log(oldV)
+        // console.log(data.v)
+        // console.log(newV)
+        // console.log(newVolumeData);
+
       } else {
         const newObject = {
           x: newDate.getTime(),
@@ -302,7 +333,8 @@ function updateCandleStick(data) {
           c: data.lp,
           v: "0",
         }
-        oldV = 0;
+
+        oldV = uV;
         newV = 0;
         newCandlestickData.push(newObject);
         socketCandle.push({
@@ -319,7 +351,7 @@ function updateCandleStick(data) {
     chart.data.datasets[0].data = newCandlestickData;
     var extraVol = [];
     const mul = 60000;
-    var extraVolSize = parseInt(newCandlestickData.length / 4);
+    var extraVolSize = parseInt(newCandlestickData.length / 3)+1;
     for (let index = 1; index < extraVolSize; index++) {
       extraVol.push({x: newCandlestickData[newCandlestickData.length - 1].x + index*mul,y: ''})
     }
@@ -782,12 +814,13 @@ function getTimeSeries(jData, jKey, startTime, tokenId) {
   .then((res) => {
     if (res && res.data && res.data.length > 60) {
       const stockData = res.data;
-      chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv }; });
+      chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv, vol: item.v }; });
       var newChartData = chartData.reverse();
       graphData = newChartData.map((item) => ({
         x: item.t,
         c: item.c,
         v: item.v,
+        vol: item.vol
       }));
       times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
       prices = graphData.map(item => item.c);
@@ -807,7 +840,6 @@ function getTimeSeries(jData, jKey, startTime, tokenId) {
           st: st.toString(),
           et: et.toString()
         }
-        console.log(tokenId);
         setTimeout(() => { getTimeSeries(jData, jKey, startTime, tokenId); }, 100);
         retries++;
       }
@@ -1269,4 +1301,5 @@ function exportChart() {
 function refreshSocketCandle() {
   socketCandle = [];
   isUpdated = false;
+  oldV = 0;
 }

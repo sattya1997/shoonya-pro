@@ -1,15 +1,5 @@
-.main-container {
-    padding: 15px 5px 5px 5px;
-}
-
 #main-graph {
     background-color: #2f2d2d;
-}
-
-@media (max-width: 500px) {
-    .main-container {
-        margin-top: 35px;
-    }
 }
 
 @media (min-width: 500px) {
