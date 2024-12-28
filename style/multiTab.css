@@ -264,7 +264,53 @@ a {
   color : rgb(205, 185, 185);
 }
 
-a :hover{
+a :hover {
   text-decoration: dotted;
   text-decoration-color: #151515;
+}
+
+#holding-list {
+  background-color: #2a2323;
+  border: 1px solid #595959;
+  border-radius: 5px;
+  padding: 10px;
+  width: 90%;
+}
+
+#holdings-container {
+  margin-top: 30px;
+}
+
+.holding-header, .holding-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 5px;
+  align-items: center;
+  padding: 5px;
+}
+
+.holding-header {
+  background-color: #1d1c1c;
+  color: #fff;
+  font-weight: bold;
+  border-bottom: 2px solid #595959;
+  font-size: 11px;
+}
+
+.holding-item {
+  background-color: #adb7d5;
+  color: #000000;
+  border-bottom: 1px solid #595959;
+  font-size: 11px;
+}
+
+.holding-item:last-child {
+  border-bottom: none;
+}
+
+.holding-header span, .holding-item span {
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

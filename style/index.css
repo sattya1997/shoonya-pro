@@ -356,13 +356,6 @@ label p {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 480px) {
-  .orders-list {
-    width: 100%;
-    padding: 0px;
-  }
-}
-
 .orders-list h4 {
   font-size: 16px;
   margin-bottom: 10px;
@@ -1439,4 +1432,16 @@ h5 {
 
 .watch-result-item button:after {
   transform: scale(1.05);
+}
+
+@media (max-width: 480px) {
+  .orders-list {
+    width: 100vw;
+    padding: 0px;
+  }
+  #depth-toolbar {
+    max-width: 330px;
+    overflow-x: auto;
+    padding: 5px 2px;
+  }
 }

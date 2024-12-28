@@ -56,6 +56,7 @@
     <div class="tabs">
       <button class="tab-button active" onclick="showTab(1)">Home</button>
       <button class="tab-button" onclick="showTab(2)">Analyze</button>
+      <button class="tab-button" onclick="showTab(3)">Holdings</button>
     </div>
     <div id="main-container">
       <div id="analyze-container" style="display: none;">
@@ -210,7 +211,9 @@
           </div>
         </div>
       </div>
-  
+      <div id="holdings-container">
+        <div id="holding-list"></div>
+      </div>
     </div>
   </div>
   <script src="./js/socket.js"></script>

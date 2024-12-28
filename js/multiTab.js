@@ -31,13 +31,18 @@ function showTab(tabNumber) {
   if (tabNumber === 1) {
     document.getElementById("home").style.display = "block";
     document.getElementById("analyze-container").style.display = "none";
-  } else {
+    document.getElementById("holdings-container").style.display = "none";
+  } else if (tabNumber === 2) {
     document.getElementById("analyze-container").style.display = "block";
     document.getElementById("home").style.display = "none";
+    document.getElementById("holdings-container").style.display = "none";
+  } else if (tabNumber === 3) {
+    document.getElementById("analyze-container").style.display = "none";
+    document.getElementById("home").style.display = "none";
+    document.getElementById("holdings-container").style.display = "block";
+    getHoldings();
   }
 }
-
-
 
 var dataArray = [];
 
@@ -163,4 +168,33 @@ function convertToNumber(str) {
     default:
       return number; // No unit means it's just a number
   }
+}
+
+function getHoldings() {
+  const jData = {
+    uid: uid,
+    actid: uid,
+    prd: "C",
+  };
+  const jKey = userToken;
+
+  const res = postRequest("holdings", jData, jKey);
+  res.then((response) => {
+    const holdings = response.data;
+    if (holdings.length > 0) {
+      const holdingList = document.getElementById("holding-list");
+      let htmlData = `
+        <div class="holding-header">
+          <span>Name</span><span>Qty</span><span>Avg prc</span><span>Buy Value</span><span>P/L</span>
+        </div>`;
+      holdings.forEach(item => {
+        const name = item.exch_tsym[0].tsym.split("-")[0];
+        htmlData += `
+        <div class="holding-item">
+          <span>${name}</span><span>${item.npoadqty}</span><span>${item.upldprc}</span><span>${parseFloat(parseFloat(item.npoadqty)*parseFloat(item.upldprc)).toFixed(2)}</span><span>0</span>
+        </div>`;
+      });
+      holdingList.innerHTML = htmlData;
+    }
+  });  
 }
