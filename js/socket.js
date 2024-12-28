@@ -502,9 +502,14 @@ function unsubscribeOrderUpdate() {
 
 function createNiftyDataField(data) {
   const niftyTag = document.getElementById("nifty-tag");
-  if (data && data.ft && data.lp && data.pc) {
+  if (data && data.lp && data.pc) {
     var sym;
-    const date = new Date(data.ft * 1000);
+    var date;
+    if (data.ft) {
+      date = new Date(data.ft * 1000);
+    } else {
+      date = new Date();
+    }
     const options = {
       hour: "2-digit",
       minute: "2-digit",

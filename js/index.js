@@ -1372,13 +1372,13 @@ function showWatchList() {
         <div style="position:relative">
         <input type="text" id="search-bar" placeholder="Search for stocks..." onkeyup="delayStocks(this)">
         </div>
-        <div id="watch-search-container"></div>
+        <div id="watch-search-container"></div><div class="watch-list">
         ${stocks.map(stock => `
           <div class="watch-list-stock-item" data-token="${stock.token}">
             <span>${stock.tsym}</span>
             <div style="display:flex;justify-content: flex-end; margin-top: 4px;"><span class="close-modal" onclick="removeStock('${stock.token}')"></span></div> 
           </div>
-        `).join('')}
+        `).join('')}</div>
       `;
     };
     renderStockList(watchList);
@@ -1419,7 +1419,7 @@ function filterStocks() {
       const data = response.data;
       if (data.stat === "Ok") {
         resultsList.innerHTML = "";
-        htmlData = "";
+        htmlData = `<div style="display:flex;justify-content: flex-end;margin-right: 5px; margin-top: 3px;"><span class="close-modal" onclick="removeSearchWatchList()"></span></div>`;
         data.values.forEach((item) => {
           htmlData += `
                 <li class="watch-result-item">
@@ -1432,7 +1432,13 @@ function filterStocks() {
       }
     });
     resultsList.style.display = "block";
+  } else {
+    removeSearchWatchList()
   }
+}
+
+function removeSearchWatchList() {
+  document.getElementById("watch-search-container").style.display = "none";
 }
 
 function addStock(token, event) {
@@ -1469,7 +1475,11 @@ function removeStock(token) {
     res.then((response) => {
       if (response.stat === "Ok");
       stockItem.remove();
-      unsubscribeTouchline([`NSE|${token}`])
+      unsubscribeTouchline([`NSE|${token}`]);
+      const orderTagItem = document.getElementById(`order-${token}`);
+      if (orderTagItem) {
+        orderTagItem.remove();
+      }
     })
   }
 }
@@ -1482,8 +1492,7 @@ function submitWatchlist() {
       tsym: item.querySelector('span').textContent
     };
   });
-  
-  // Submit the new watchlist
+
   postRequest("saveWatchlist", { watchlist: newWatchlist }, jKey).then(response => {
     alert('Watchlist saved successfully!');
   }).catch(error => {

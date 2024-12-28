@@ -1349,14 +1349,14 @@ h5 {
   box-shadow: 4px 3px 10px rgb(251 219 219 / 18%);
   z-index: 1000;
   text-align: center;
-  color: #ed8484;
-  font-size: 14px;
+  color: #b5cecf;
+  font-size: 12px;
   font-weight: 500;
   font-family: monospace;
   width: 90%;
   max-width: 280px;
   height: 400px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 #search-bar {
@@ -1389,7 +1389,7 @@ h5 {
 
 #watch-search-container {
   position: absolute;
-  top: 65px;
+  top: 69px;
   left: 0;
   background-color: #151b23;
   border: 1px solid #323232;
@@ -1402,7 +1402,16 @@ h5 {
   z-index: 1051;
   min-height: 50px;
   min-width: 95%;
+  padding: 2px 3px;
+  font-size: 11px;
+  color : rgb(188, 188, 188);
   display: none;
+}
+
+.watch-list {
+  border: 2px solid #151b23;
+  padding: 2px 3px;
+  border-radius: 5px;
 }
 
 .watch-result-item {
