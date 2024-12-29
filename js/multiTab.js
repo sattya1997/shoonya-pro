@@ -185,16 +185,56 @@ function getHoldings() {
       const holdingList = document.getElementById("holding-list");
       let htmlData = `
         <div class="holding-header">
-          <span>Name</span><span>Qty</span><span>Avg prc</span><span>Buy Value</span><span>P/L</span>
+          <span>Name</span><span>Qty</span><span>Avg prc</span><span>Buy val</span><span>Cur val</span><span>P/L</span>
         </div>`;
       holdings.forEach(item => {
         const name = item.exch_tsym[0].tsym.split("-")[0];
         htmlData += `
         <div class="holding-item">
-          <span>${name}</span><span>${item.npoadqty}</span><span>${item.upldprc}</span><span>${parseFloat(parseFloat(item.npoadqty)*parseFloat(item.upldprc)).toFixed(2)}</span><span>0</span>
+          <span>${name}</span><span>${item.npoadqty}</span><span>${item.upldprc}</span><span>${parseFloat(parseFloat(item.npoadqty)*parseFloat(item.upldprc)).toFixed(2)}</span><span id="watch-pl-buy-${item.exch_tsym[0].token}">0</span><span class="watch-pl" data-watch-token="${item.exch_tsym[0].token}" data-watch-prc=${item.upldprc} data-watch-qty=${item.npoadqty} style="font-weight:600">0</span>
         </div>`;
       });
       holdingList.innerHTML = htmlData;
+      updateWatchListPnL();
     }
   });  
+}
+
+async function updateWatchListPnL() {
+  const watchPlList = document.getElementsByClassName("watch-pl");
+  for (let index = 0; index < watchPlList.length; index++) {
+    const element = watchPlList[index];
+    const token = element.dataset.watchToken;
+    const buyPrc = parseFloat(element.dataset.watchPrc);
+    const qty = parseFloat(element.dataset.watchQty)
+    const data = await getDetails(token);
+    if (data) {
+      const pnL = ((data.lp - buyPrc)* qty).toFixed(2);
+      element.innerHTML = pnL;
+      element.style.color = pnL > 0? "#00b738": pnL < 0? "#d70909":"black";
+      const totalbuy = document.getElementById(`watch-pl-buy-${token}`);
+      if (totalbuy){
+        totalbuy.innerHTML = (qty*data.lp).toFixed(2);
+      }
+    }
+  }
+}
+
+async function getDetails(token) {
+  const jData = {
+    uid: uid,
+    token: token.toString(),
+    exch: "NSE",
+  };
+  const jKey = userToken;
+
+  return postRequest("getquotes", jData, jKey)
+    .then((res) => {
+      if (res.data.stat === "Ok") {
+        return res.data;
+      } else return null;
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
 }

@@ -274,7 +274,7 @@ a :hover {
   border: 1px solid #595959;
   border-radius: 5px;
   padding: 10px;
-  width: 90%;
+  width: 100%;
 }
 
 #holdings-container {
@@ -283,7 +283,7 @@ a :hover {
 
 .holding-header, .holding-item {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 4fr 4fr 4fr 4fr 4fr 4fr;
   gap: 5px;
   align-items: center;
   padding: 5px;
@@ -298,8 +298,8 @@ a :hover {
 }
 
 .holding-item {
-  background-color: #adb7d5;
-  color: #000000;
+  background-color: #242b40;
+  color: whitesmoke;
   border-bottom: 1px solid #595959;
   font-size: 11px;
 }
