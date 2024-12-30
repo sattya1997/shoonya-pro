@@ -176,6 +176,7 @@ function connectWebSocket() {
           updateOrderPos(message);
           if (message.lp) {
             updateCreateOrder(message);
+            updateHoldingData(message);
           }
         }
 
@@ -204,6 +205,27 @@ function connectWebSocket() {
   websocket.onerror = function (error) {
     console.error("WebSocket error observed:", error);
   };
+}
+
+async function updateHoldingData(data) {
+  const watchPlList = document.getElementsByClassName("watch-pl");
+  for (let index = 0; index < watchPlList.length; index++) {
+    const element = watchPlList[index];
+    const token = element.dataset.watchToken;
+    if(token === data.tk) {
+      const buyPrc = parseFloat(element.dataset.watchPrc);
+      const qty = parseFloat(element.dataset.watchQty)
+      if (data) {
+        const pnL = ((data.lp - buyPrc)* qty).toFixed(2);
+        element.innerHTML = pnL;
+        element.style.color = pnL > 0? "#00b738": pnL < 0? "#d70909":"black";
+        const totalbuy = document.getElementById(`watch-pl-buy-${token}`);
+        if (totalbuy){
+          totalbuy.innerHTML = (qty*data.lp).toFixed(2);
+        }
+      }
+    }
+  }
 }
 
 function updateGraph(data) {
