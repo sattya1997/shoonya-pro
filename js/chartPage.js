@@ -46,7 +46,6 @@ const zoomOptions = {
 };
 
 var ctx = document.getElementById("candlestickChart").getContext("2d");
-//Chart.register(ChartJsPluginAnnotation);
 Chart.register(ChartDataLabels);
 var chart = new Chart(ctx, {
   type: "candlestick",
@@ -64,7 +63,7 @@ var chart = new Chart(ctx, {
         label: "Volume",
         data: volumeData,
         yAxisID: "volumeAxis",
-        backgroundColor: "rgba(0, 0, 255, 0.35)",
+        backgroundColor: "rgba(140, 132, 255, 0.29)",
         barPercentage: 0.35,
         parsing: {
           yAxisKey: "y",
@@ -75,19 +74,38 @@ var chart = new Chart(ctx, {
   options: {
     animation: false,
     scales: {
-      "priceAxis": {
-        type: "linear",
-        position: "left",
-        beginAtZero: true
+      x: {
+        type: "category",
+        afterDataLimits: (scale) => {
+          scale.max = "Extra Space";
+        },
+        backgroundColor: "white",
       },
-      "volumeAxis": {
-        type: "linear",
+      priceAxis: {
+        position: "left",
+        backgroundColor: "white",
+      },
+      volumeAxis: {
         position: "right",
         display: false, // Hide the volume y-axis
         beginAtZero: true,
-      }
+        backgroundColor: "red",
+      },
     },
     plugins: {
+      annotation: {
+        annotations: {
+          animation: false,
+          line1: {
+            type: "line",
+            yScaleID: "priceAxis",
+            yMin: 0,
+            yMax: 0,
+            borderColor: "rgb(82, 93, 0)",
+            borderWidth: .3,
+          },
+        },
+      },
       zoom: zoomOptions,
       backgroundColor: {},
       tooltip: {
@@ -96,7 +114,7 @@ var chart = new Chart(ctx, {
       datalabels: {
         align: "right",
         anchor: "end",
-        offset: -10,
+        offset: -50,
         backgroundColor: "rgba(0,0,0,0.8)",
         borderRadius: 4,
         color: "white",
@@ -132,16 +150,43 @@ async function getCandlestickChartData() {
   let endTime;
   let startTime;
   if (now < morningLimit) {
-    endTime = new Date(now);
-    endTime.setDate(now.getDate() - 1);
-    endTime.setHours(15, 15, 0, 0);
-    startTime = new Date(endTime);
+    if (now.getDay() === 1) {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 3);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    } else {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 1);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    }
+    
   } else {
     endTime = now > marketEndTime ? marketEndTime : now;
     startTime = new Date(endTime);
   }
+  var type = document.getElementById('timeframe').value;
+  var dayValue = 0;
+  if (type != '0') {
+    if (type === "2") {
+      dayValue = 7;
+    }
+  
+    if (type === "3") {
+      dayValue = 30;
+    }
+    if (type === "4") {
+      dayValue = 180;
+    }
+    startTime.setDate(endTime.getDate() - dayValue);
+    startTime.setHours(9, 15, 0, 0);
+  } else {
+    startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
+  }
   var et = Math.floor(endTime.getTime() / 1000);
-  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
   const st = Math.floor(startTime.getTime() / 1000);
   const jData = {
     uid: uid,
@@ -155,46 +200,106 @@ async function getCandlestickChartData() {
   .then((res) => {
     if (res && res.data && res.data.length > 0) {
       const stockData = res.data;
-      candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv }; });
+      if (stockData.length > 2000) {
+        const aggregateHourly = (data) => {
+          const hourlyData = [];
+          for (let i = 0; i < data.length; i += 60) {
+            const hourData = data.slice(i, i + 60);
+            const hourOpen = parseFloat(hourData[0].into).toFixed(2);
+            const hourHigh = Math.max(...hourData.map((d) => parseFloat(d.inth).toFixed(2)));
+            const hourLow = Math.min(...hourData.map((d) => parseFloat(d.intl).toFixed(2)));
+            const hourClose = parseFloat(hourData[hourData.length - 1].intc).toFixed(2);
+            const hourVolume = hourData.reduce((sum, d) => sum + parseInt(d.intv), 0);
+            hourlyData.push({ time: hourData[0].time, o: hourOpen, h: hourHigh, l: hourLow, c: hourClose, v: hourVolume, vol: "0" });
+          }
+          return hourlyData;
+        };
+        const aggregatedData = aggregateHourly(stockData);
+        candlestickData = aggregatedData.map((item) => {
+          return { t: convertToMilliseconds(item.time), o: item.o, h: item.h, l: item.l, c: item.c, v: item.v };
+        });
+      } else {
+        candlestickData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), o: item.into, h: item.inth, l: item.intl, c: item.intc, v: item.intv, vol: item.v }; });
+      }
       candlestickData = candlestickData.reverse();
+      candlestickData[candlestickData.length - 1].vol = stockData[0].v;
+      refreshSocketCandle();
+      
       var newTimes = [];
       var newCandlestickData = [];
       var newVolumeData = [];
+      var volumeColors = []; // Array to hold dynamic colors for volume bars
+      
       for (let index = 0; index < candlestickData.length; index++) {
         const item = candlestickData[index];
-        newCandlestickData.push({
-          x: item.t,
-          o: item.o,
-          h: item.h,
-          l: item.l,
-          c: item.c,
-        });
-        newVolumeData.push({
-          x: item.t,
-          y: item.v,
-        });
-        newTimes.push(item.t)
+        newCandlestickData.push({ x: item.t, o: item.o, h: item.h, l: item.l, c: item.c });
+        newVolumeData.push({ x: item.t, y: item.v });
+        
+        // Determine color based on whether volume increased or decreased
+        if (index > 0 && item.v > candlestickData[index - 1].v) {
+          volumeColors.push('rgba(75, 192, 192, .35)');
+        } else {
+          volumeColors.push('rgba(255, 99, 132, .35)');
+        }
+        newTimes.push(item.t);
       }
       chart.data.labels = newTimes;
       chart.data.datasets[0].data = [...newCandlestickData];
-      chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+      chart.data.datasets[1].data = [...newVolumeData];
+      chart.data.datasets[1].backgroundColor = volumeColors;
+
+      var extraVolSize = parseInt(newCandlestickData.length / 4) + 1;
+      var extraVol = [];
+      const mul = 60000;
+      for (let index = 1; index < extraVolSize; index++) {
+        extraVol.push({ x: newCandlestickData[newCandlestickData.length - 1].x + index * mul, y: '' });
+      }
+      chart.data.datasets[1].data = [...newVolumeData, ...extraVol];
+      
       var newPrice = newCandlestickData[newCandlestickData.length - 1].c;
       chart.options.plugins.datalabels.formatter = function(value, context) {
         const datasetIndex = context.datasetIndex;
         const dataIndex = context.dataIndex;
-        const dataLength = context.chart.data.datasets[datasetIndex].data.length;
         const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
-        if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
-          return `${newPrice}`;
+        if (dataIndex === 0 && datasetType === 'bar') {
+          return `${newVolumeData[0].y}`;
         } else {
           return '';
         }
       };
-      chart.options.scales.volumeAxis.display = false;
+
+      chart.options.plugins.annotation.annotations.line1 = {
+        type: "line",
+        yScaleID: "priceAxis",
+        yMin: newPrice,
+        yMax: newPrice,
+        borderColor: "rgb(0, 195, 255)",
+        borderWidth: 0.8,
+        borderDash: [5, 5],
+      };
+
+      chart.options.plugins.annotation.annotations.label1 = {
+        type: "label",
+        xValue: newCandlestickData[newCandlestickData.length - 1].x,
+        yValue: newPrice,
+        backgroundColor: "rgba(58, 234, 88, 0.3)",
+        borderColor: "rgba(0,0,0,0)",
+        color: 'rgb(224, 210, 210)',
+        borderWidth: 0.1,
+        borderRadius: 3,
+        content: newPrice,
+        font: { size: 12 },
+        position: "center",
+        xAdjust: 33,
+      };
+
+      chart.options.scales.priceAxis.ticks.color = "rgba(205, 205, 205, 0.6)";
+      chart.options.scales.x.ticks.color = "rgba(205, 205, 205, 0.6)";
+      chart.options.scales.x.grid = { color: "rgba(173, 151, 255, 0.1)" };
+      chart.options.scales.priceAxis.grid = { color: "rgba(173, 151, 255, 0.1)" };
       chart.update();
       document.getElementById("current-price").innerText = newPrice;
       document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
-
     }
   })
   .catch((error) => {
@@ -211,12 +316,12 @@ function convertToMilliseconds(timeString) {
 }
 
 
-chart.config.data.datasets[0].backgroundColors = {
-  up: "#83c67e",
-  down: "#ff5d5d",
-  unchanged: "#7f5dff",
-};
-chart.config.data.datasets[0].borderColors = "rgba(55, 55, 55, .3)";
+// chart.config.data.datasets[0].backgroundColors = {
+//   up: '#01ff01',
+//   down: '#fe0000',
+//   unchanged: '#999',
+// };
+// chart.config.data.datasets[0].borderColors = "rgba(55, 55, 55, .3)";
 chart.options = {
   responsive: true,
   plugins: {
@@ -229,7 +334,7 @@ chart.options = {
 chart.update();
 
 function onTimeframeChange(selectedValue) {
-  console.log("Selected timeframe:", selectedValue);
+  getCandlestickChartData();
   // can call any function here that needs the selected value
   // For example:
   // updateChart(selectedValue);
@@ -294,3 +399,11 @@ document.getElementById("volume-axis-toggle").addEventListener("change", async f
   chart.options.scales.volumeAxis.display = this.checked;
   chart.update();
 });
+
+function exportCandleGraph() {
+  const link = document.createElement("a");
+  link.href = chart.toBase64Image();
+  let date = Math.floor(Date.now() / 1000);
+  link.download = "candle_chart"+"_"+date+".png";
+  link.click();
+}

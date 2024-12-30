@@ -55,7 +55,31 @@ body {
   background-color: #ff8888;
 }
 
+.tabs {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-items: center;
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+  padding: 5px;
+}
+
 #main-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-items: center;
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+  height: auto;
+  width: auto;
+  padding: 5px;
+}
+
+#home-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -149,22 +173,22 @@ body {
 
 .result-item > span:first-child {
   font-weight: 500;
-  flex-basis: 100%; /* Ensure full width for the first span */
-  text-align: left; /* Align text to the left */
-  margin-bottom: 5px; /* Add some space below */
+  flex-basis: 100%;
+  text-align: left;
+  margin-bottom: 5px;
 }
 
 .result-item button {
-  flex: 1; /* Allow buttons and links to flex */
-  min-width: 40px; /* Set a minimum width */
+  flex: 1;
+  min-width: 40px;
   border-radius: 2px;
   transition: transform 0.3s ease;
-  color: white;
+  color: rgb(0, 0, 0);
   font-weight: 600;
   font-size: 9px;
   border: none;
   height: 20px;
-  text-align: center; /* Center text within the buttons */
+  text-align: center;
 }
 
 .result-item a {
@@ -237,7 +261,7 @@ body {
   border: none;
   border-radius: 2px;
   transition: transform 0.3s ease;
-  color: white;
+  color: rgb(0, 0, 0);
   font-weight: 600;
 }
 
@@ -324,19 +348,12 @@ label p {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  width: 70%;
+  width: 100%;
   background-color: #151b23;
   border: 1px solid #373737;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 480px) {
-  .orders-list {
-    width: 100%;
-    padding: 0px;
-  }
 }
 
 .orders-list h4 {
@@ -345,10 +362,16 @@ label p {
   color: #257415;
 }
 
+
 .buy-order-list,
 .sell-order-list,
-.other-order-list .place-order-list {
+.other-order-list {
   margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 3px;
+  width: 100%;
 }
 
 .buy-order-list h5,
@@ -361,6 +384,7 @@ label p {
 }
 
 .place-order-list {
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -383,8 +407,8 @@ label p {
   align-self: center;
   width: auto;
   padding: 5 15px 5 15px;
-  background-color: #599ee8;
-  border: 1px solid rgb(0, 79, 206);
+  background-color: #353535;
+  border: 1px solid rgb(62 62 62);
   border-radius: 3px;
   color: whitesmoke;
   transition: transform 0.3s ease;
@@ -412,6 +436,9 @@ h5 {
 }
 
 .place-order-list label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   font-weight: bold;
   color: #ffffff;
   margin-bottom: 5px;
@@ -423,6 +450,7 @@ h5 {
 
 .place-order-list input[type="number"],
 .place-order-list input[type="text"] {
+  margin-top: 5px;
   padding: 5px;
   border: 1px solid #ced4da;
   border-radius: 4px;
@@ -430,12 +458,14 @@ h5 {
   width: 50%;
   background-color: #3a3a3a;
   color: whitesmoke;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .place-order-list button[type="submit"] {
   width: 60%;
   padding: 6px 5px;
-  background-color: #28a745;
+  background-color: #3e7f4d;
   color: #ffffff;
   border: none;
   border-radius: 4px;
@@ -465,18 +495,19 @@ h5 {
 }
 
 #place-order-top-label label {
-  padding: 1px 30px;
+  padding: 2px 2px;
   background-color: #616161;
   border-radius: 3px;
-  margin: 5px 5px
+  margin: 5px 5px;
+  min-width: 100px;
 }
 
 .buy-order-list h5 {
-  color: green;
+  color: #82dbcb;
 }
 
 .sell-order-list h5 {
-  color: red;
+  color: #e99090;
 }
 
 .other-order-list h5 {
@@ -486,13 +517,13 @@ h5 {
 .buy-order-list label {
   font-size: 10px;
   font-weight: 700;
-  color: green;
+  color: #45f8f8;
 }
 
 .sell-order-list label {
   font-size: 10px;
   font-weight: 700;
-  color: red;
+  color: #ff9898;
 }
 
 .other-order-list label {
@@ -519,11 +550,10 @@ h5 {
   color: "white";
 }
 
-/* Buttons for modify and cancel orders */
 .single-order-list button {
   padding: 3px 8px;
   margin-right: 10px;
-  color: #fff;
+  color: #000000;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -558,11 +588,13 @@ h5 {
 }
 
 .cancel {
-  background-color: red;
+  background-color: rgba(255, 157, 157, 0.9);
+  color: black;
 }
 
 .auto {
-  background-color: green;
+  background-color: rgba(151, 255, 236, 0.86);
+  color: black;
 }
 
 #msg {
@@ -585,6 +617,15 @@ h5 {
   font-weight: 600;
   border-radius: 2px;
   padding: 3px;
+  cursor: pointer;
+}
+
+.order-tag:hover{
+  transform: scale(1.02);
+}
+
+#nifty-tag:hover {
+  transform: scale(1.01);
 }
 
 #nifty-tag {
@@ -627,7 +668,7 @@ h5 {
   font-weight: 600;
   padding: 3px 10px;
   font-family: monospace;
-  color: #ff5656;
+  color: #ff9898;
 }
 
 #nav-bar-total-cash {
@@ -635,7 +676,7 @@ h5 {
   font-weight: 600;
   padding: 3px 10px;
   font-family: monospace;
-  color: #28e654;
+  color: #45f8f8;
 }
 
 #nav-bar-pl {
@@ -706,7 +747,6 @@ input:checked+.slider:before {
   border-radius: 50%;
 }
 
-/* Styling for the toolbar */
 #depth-toolbar {
   display: flex;
   justify-content: space-between;
@@ -725,7 +765,7 @@ input:checked+.slider:before {
 #depth-toolbar span {
   margin: 0 5px;
   display: flex;
-  align-items: center; /* Align items in the center vertically */
+  align-items: center;
 }
 
 #depth-toolbar label {
@@ -799,7 +839,8 @@ table th {
 
 table tr {
   font-size: 12px;
-  background-color: #404040;;
+  background-color: #000000;
+  color: rgb(203, 203, 203);
 }
 
 table tr:nth-child(even) {
@@ -924,17 +965,15 @@ h1 {
   justify-content: space-between;
 }
 
-/* CSS for the popup */
 #dynamic-popup {
   position: absolute;
-  background-color: #e3e4ff;
+  background-color: #313537;
   border: 1px solid #000000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 5px;
   z-index: 1000;
   border-radius: 5px;
   opacity: 0.95;
-  /* transition: all 0.2s ease-in-out; */
 }
 
 #dynamic-popup p {
@@ -942,7 +981,7 @@ h1 {
   margin: 0 0 10px;
   font-size: 13px;
   font-weight: bold;
-  color: #333;
+  color: whitesmoke;
 }
 
 #dynamic-popup button {
@@ -953,7 +992,7 @@ h1 {
   cursor: pointer;
   font-size: 10px;
   font-weight: bold;
-  color: white;
+  color: rgb(0, 0, 0);
   background-color: #007bff;
   transition: background-color 0.2s ease;
 }
@@ -964,7 +1003,7 @@ h1 {
 
 #chart-popup {
   position: absolute;
-  background-color: #272b27;
+  background-color: #141414;
   border: 1px solid #000000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 5px;
@@ -1014,61 +1053,33 @@ h1 {
 }
 
 .profit {
-  color: green;
+  color: #45f8f8;
 }
 
 .loss {
-  color: red;
+  color: #ff9898;
 }
 
 #position {
-  max-width: 300px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
   padding: 10px 20px;
   background-color: #1f2123;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
   font-size: 12px;
+  width: 500px;
 }
 
-#position ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+#position div {
+
+  padding: 5px 10px;
 }
 
-#position li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #ddd;
-}
-
-#position li:last-child {
-  border-bottom: none;
-}
-
-#position li span {
-  font-weight: bold;
-  color: #c1c1c1;
-}
-
-#position li span+span {
-  font-weight: normal;
-}
-
-#position li span+span::before {
-  content: "";
-  margin-right: 5px;
-}
-
-#position li span+span.positive {
-  color: green;
-}
-
-#position li span+span.negative {
-  color: red;
+#position span {
+  color: whitesmoke;
 }
 
 #dynamic-popup-order {
@@ -1220,4 +1231,220 @@ h5 {
 #card-header-btns button {
   width: auto;
   background-color: #00000000;
+}
+
+.save-chart-btn {
+  font-size: 10px;
+  background-color: #9494ae;
+  border: none;
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+.save-chart-btn:hover {
+  background-color: #b9b9ff;
+}
+
+#chart-popup-timeframe {
+  background-color: #000000;
+  color: wheat;
+  border-color: #454545;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+#chart-popup-timeframe:hover {
+  background-color: #1f1d1d;
+}
+
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #141313;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid;
+  box-shadow: 4px 3px 10px rgb(251 219 219 / 18%);
+  z-index: 1000;
+  text-align: center;
+  color: #ed8484;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: monospace;
+  width: 90%;
+  max-width: 280px;
+}
+
+.popup button {
+  margin: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.blur {
+  filter: blur(3px);
+  opacity: .3;
+}
+
+.popup-overlay-watch-list {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+#edit-watch-list {
+  width: 28px;
+  background-color: #232f46f5;
+  border: none;
+  height: 22px;
+  margin-top: 8px;
+  margin-left: 10px;
+  border-radius: 5px;
+}
+
+#edit-watch-list:hover {
+  background-color: #4a6393f5;
+}
+
+#edit-watch-list :active {
+  transform: scale(1.1);
+}
+
+#popup-watch-list {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #141313;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid;
+  box-shadow: 4px 3px 10px rgb(251 219 219 / 18%);
+  z-index: 1000;
+  text-align: center;
+  color: #b5cecf;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: monospace;
+  width: 90%;
+  max-width: 280px;
+  height: 400px;
+  overflow-y: auto;
+}
+
+#search-bar {
+  width: 70%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #000000;
+  color: whitesmoke;
+}
+
+.watch-list-stock-item {
+  display: flex;
+  justify-content: center;
+  background-color: #151b23;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 3px;
+  font-size: small;
+}
+
+.watch-list-stock-item:last-child {
+  border-bottom: none;
+}
+
+.watch-list-stock-item span {
+  flex: 1;
+}
+
+#watch-search-container {
+  position: absolute;
+  top: 69px;
+  left: 0;
+  background-color: #151b23;
+  border: 1px solid #323232;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 0 5px 0 5px;
+  overflow-x: hidden;
+  z-index: 1051;
+  min-height: 50px;
+  min-width: 95%;
+  padding: 2px 3px;
+  font-size: 11px;
+  color : rgb(188, 188, 188);
+  display: none;
+}
+
+.watch-list {
+  border: 2px solid #151b23;
+  padding: 2px 3px;
+  border-radius: 5px;
+}
+
+.watch-result-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: 1px solid #e1e1e1;
+  padding: 13px 7px;
+  list-style-type: none;
+}
+
+.watch-result-item button {
+  padding: 2px 4px;
+  border: none;
+  border-radius: 5px;
+  background-color: #212224;
+  color: rgb(92, 206, 86);
+}
+
+.watch-result-item button:hover {
+  background-color: #569c8e;
+  transform: scale(0.9);
+  color: black;
+}
+
+.watch-result-item button:after {
+  transform: scale(1.05);
+}
+
+@media (max-width: 480px) {
+  .orders-list {
+    max-width: 97vw;
+    padding: 0px;
+  }
+  #depth-toolbar {
+    max-width: 330px;
+    overflow-x: auto;
+    padding: 5px 2px;
+  }
+  #position {
+    max-width: 80%;
+  }
 }

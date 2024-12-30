@@ -3,6 +3,8 @@ const userToken = localStorage.getItem("pro-userToken");
 const baseUrl = "https://api.shoonya.com";
 const resultsList = document.getElementById("results-list");
 var isLoggedIn = false;
+var jDataF = {};
+var norenordnoF;
 if (!userToken) {
   window.location.href = "./login.html";
 } else {
@@ -83,7 +85,7 @@ async function searchScrip() {
                     <button class="search-list-btn" onclick="addToDetailsList('${item.token}')">Card</button>
                     <button class="search-list-btn" onclick="addToTagList('${item.token}', '${item.tsym}')">Tag</button>
                     <button data-id="btn-sell-list-${item.token}" token="${item.token}" class="cancel">Sell</button>
-                    <button style="background-color: #5bd3bb;"><a href="./chartPage.html?stockSymbol=${item.token}">Chart</a></button>
+                    <button style="background-color: #5bd3bb;" onclick="setData(${item.token}, this)"><a>Chart</a></button>
                   </span>
                 </li>
               `;
@@ -222,7 +224,6 @@ function closeCard(token) {
 }
 
 function createStockCard(data) {
-  console.log(data)
   const detailsList = document.getElementById("details-list");
   const goToChartPage = document.createElement("div");
   goToChartPage.innerHTML = `<button id="enable-drag-btn" onclick="callCardDraggable(${data.token}, this)"><img src="./icons/pop.png"></button><a class="btn-go-to-chart" data-name="${data.tsym.split('-')[0]}" onclick="setData(${data.token}, this)"><img src="./icons/stockChart.png"></a>`;
@@ -272,20 +273,20 @@ function createStockCard(data) {
   let priceChange = data.lp - data.o;
   let percentChange = parseFloat((priceChange * 100) / data.o).toFixed(2);
   const change = parseFloat(priceChange).toFixed(2) + " (" + percentChange + " %)";
-  const classValue = percentChange > 0 ? "green" : "red";
+  const classValue = percentChange > 0 ? "rgba(151, 255, 236, 0.86)" : "rgba(255, 157, 157, 0.9)";
 
   priceInfo.innerHTML = `
     <div class="sub-info">
       <label><button data-id="btn-buy-${data.token}" token="${data.token}" class="auto">Buy</button></label>
-      <label style="color:${classValue};"><p class="fontBolder">Last Price: </p><p class="fontBolder" id="${data.token}-last-price">${data.lp}</p></label>
+      <label style="color:${classValue}"><p class="fontBolder">Last Price: </p><p class="fontBolder" id="${data.token}-last-price">${data.lp}</p></label>
       <label><p class="fontBolder">Prev close: </p><p id="${data.token}-prev-close">${data.c}</p></label>
       <label style="color:#d3d332;"><p class="fontBolder">Open: </p><p id="${data.token}-open">${data.o}</p></label>
       <label style="color:#18bc9c"><p class="fontBolder">High: </p><p id="${data.token}-high">${data.h}</p></label>
-      <label style="color:#18bc9c"><p class="fontBolder">Low: </p><p id="${data.token}-low">${data.l}</p></label>
+      <label style="color:rgba(233, 144, 144, 0.9);"><p class="fontBolder">Low: </p><p id="${data.token}-low">${data.l}</p></label>
     </div>
     <div class="sub-info" id="${data.token}-price-info">
       <label><button data-id="btn-sell-${data.token}" token="${data.token}" class="cancel">Sell</button></label>
-      <label style="color:${classValue};"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
+      <label style="color:${classValue}"><p class="fontBolder">Change: </p><p class="fontBolder" id="${data.token}-change">${change}</p></label>
       <label style="color:#7c73ff"><p class="fontBolder">Volume: </p><p id="${data.token}-vol">${data.v}</p></label>
       <label><p class="fontBolder">Avg Price: </p><p id="${data.token}-avg-price">${data.ap}</p></label>
       <label><p class="fontBolder">Trade Time: </p><p id="${data.token}-ltt">${data.ltt}</p></label>
@@ -342,6 +343,8 @@ function createStockCard(data) {
 }
 
 function setData(symbol, stockElement) {
+  refreshSocketCandle();
+  refreshConfigCandleData();
   const popup = document.getElementById("dynamic-popup");
   const stockName = stockElement.dataset.name;
   if (popup) {
@@ -551,10 +554,10 @@ function createPlaceOrderForm(data, orderType) {
             <label>LTP: <span class="order-ltp-${data.token}"></span></label>
           </div>
           <p>${data["tsym"]}</p>
-          <label>Qty:
+          <label>Quantity
             <input type="number" name="quantity" value="1" min="1">
           </label>
-          <label>Price:
+          <label>Limit Price
             <input type="number" name="limitPrice" value="${curPrice.toFixed(
               1
             )}" min="0" step="0.01">
@@ -873,6 +876,30 @@ function modifyOrder(modifyType, buttonElement) {
     response = modifiedOrderPlace(norenordno, "cancelorder", jData);
   }
 
+  if (modifyType === 6) {
+    var prc = parseFloat(parentElement.getAttribute("prc"));
+    var type = parentElement.getAttribute('trantype');
+    if(type === "B") {
+      prc = prc + prc / 100;
+    } else if (type === "S") {
+      prc = prc - prc / 100;
+    }
+    prc = prc.toFixed(2);
+    jDataF = {
+      norenordno: norenordno.toString(),
+      uid: uid,
+    };
+    jDataF["prctyp"] = "LMT";
+    jDataF["tsym"] = parentElement.getAttribute("tsym");
+    jDataF["qty"] = parentElement.getAttribute("qty");
+    jDataF["exch"] = "NSE";
+    jDataF["ret"] = "DAY";
+    jDataF["prc"] = prc;
+    norenordnoF = norenordno.toString();
+    popupOverlay.style.display = "block";
+    body.classList.add("blur");
+  }
+
   if (modifyType === 1) {
     var prc = parseFloat(parentElement.getAttribute("prc"));
     prc = prc - prc / 300;
@@ -922,30 +949,33 @@ function modifyOrder(modifyType, buttonElement) {
 
   if (response) {
     response.then((res) => {
-      const msgElement = document.getElementById("msg");
-      if (res.data && res.data.stat && res.data.stat === "Ok") {
-        msgElement.innerHTML = "Success";
-        msgElement.style.opacity = "1";
-        setTimeout(() => {
-          msgElement.style.opacity = "1";
-        }, 1500);
-        setTimeout(() => {
-          msgElement.style.opacity = "0";
-        }, 1500);
-
-        getOrders();
-      } else {
-        msgElement.innerHTML = "Could not modify...";
-        msgElement.style.backgroundColor = "#e88888";
-        msgElement.style.opacity = "1";
-        setTimeout(() => {
-          msgElement.style.opacity = "1";
-        }, 1500);
-        setTimeout(() => {
-          msgElement.style.opacity = "0";
-        }, 1500);
-      }
+      showOrderMessage(res);
     });
+  }
+}
+function showOrderMessage(res) {
+  const msgElement = document.getElementById("msg");
+  if (res.data && res.data.stat && res.data.stat === "Ok") {
+    msgElement.innerHTML = "Success";
+    msgElement.style.opacity = "1";
+    setTimeout(() => {
+      msgElement.style.opacity = "1";
+    }, 1500);
+    setTimeout(() => {
+      msgElement.style.opacity = "0";
+    }, 1500);
+
+    getOrders();
+  } else {
+    msgElement.innerHTML = "Could not modify...";
+    msgElement.style.backgroundColor = "#e88888";
+    msgElement.style.opacity = "1";
+    setTimeout(() => {
+      msgElement.style.opacity = "1";
+    }, 1500);
+    setTimeout(() => {
+      msgElement.style.opacity = "0";
+    }, 1500);
   }
 }
 
@@ -972,10 +1002,6 @@ function getOrders() {
   res
     .then((response) => {
       const data = response.data;
-      document.getElementById("buy-order-list").innerHTML =
-        "<h5>Buy orders:</h5>";
-      document.getElementById("sell-order-list").innerHTML =
-        "<h5>Sell orders:</h5>";
       var buyOrderCount = 0;
       var sellOrderCount = 0;
       var otherOrderCount = 0;
@@ -1032,20 +1058,22 @@ function getOrders() {
         const totalPnLResults = calculateTotalPnL(orderDetailsForPnL);
         if (totalPnLResults.length > 0) {
           const positionElement = document.getElementById("position");
-          let string = '<ul>';
+          let string = '';
           totalPnLResults.forEach(result => {
-            let token =  result.stock;
+            let token = result.stock;
             const element = document.querySelector(`[data-pos-id="${token}"]`);
             const name = element.dataset.posTsym;
             let pnl = result.totalPnL;
-            const color = pnl > 0 ? '#3aff7d':pnl < 0? '#ff0000': '#d2d2d2';
-            pnl = pnl > 0? `+${pnl}` : pnl
+            const color = pnl > 0 ? '#45f8f8' : pnl < 0 ? '#ff9898' : '#d2d2d2';
+            pnl = pnl > 0 ? `+${pnl}` : pnl;
             string = string + `
-              <li><span>${name}:</span><span style="color:${color}">${pnl}</span></li>
-            ` ;
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>${name}:&nbsp&nbsp</span><span style="color:${color}">${pnl}</span>
+              </div>
+            `;
           });
           positionElement.innerHTML = string;
-        }
+        }        
       }
     })
     .catch((err) => {
@@ -1091,7 +1119,7 @@ function generateOrderDetails(order, id, count) {
     <label></label><span>${order.prc}&nbsp;&nbsp;</span>
     <label>Qty:&nbsp</label><span>${order.qty}&nbsp;&nbsp;</span>
     <label>LTP:&nbsp;</label><span id ="ltp">&nbsp;&nbsp;</span>
-    <label></label><span>${order.status == "COMPLETE" ? 'Dn' : "Opn"}&nbsp;&nbsp;</span>
+    <label></label><span>${order.status == "COMPLETE" ? `Avg: ${order.avgprc || order.prc}` : "Opn"}&nbsp;&nbsp;</span>
     <label>Pos:&nbsp</label><span data-pos-id="${order.token}" data-pos-prc="${order.avgprc || order.prc}" data-pos-qty="${order.qty}" data-pos-status="${order.status}" data-pos-type="${order.trantype}" data-pos-tsym="${order.tsym}">0</span>
     ${id !== "other-order-list" ? `
       <br>
@@ -1113,10 +1141,6 @@ function generateOrderDetails(order, id, count) {
       button.disabled = disabled;
       if (disabled) button.classList.add("disabled-button");
     });
-  }
-
-  if (count === 1) {
-    list.innerHTML = id === "buy-order-list" ? "<h5>Buy orders:</h5>" : id === "sell-order-list" ? "<h5>Sell orders:</h5>" : "<h5>Other orders:</h5>";
   }
 
   list.appendChild(singleOrder);
@@ -1210,10 +1234,10 @@ function getBalance() {
         "Cash: " + "&#8377; " + parseFloat(cashAvailable).toFixed(2);
       
       if ( value.rpnl && parseFloat(value.rpnl) > 0) {
-        document.getElementById("nav-bar-pl").style.color = "#f65454"
+        document.getElementById("nav-bar-pl").style.color = "#ff9898"
         document.getElementById("nav-bar-pl").innerHTML = "P/L: "+(0-parseFloat(value.rpnl));
       } else if (value.rpnl && parseFloat(value.rpnl) < 0) {
-        document.getElementById("nav-bar-pl").style.color = "#33e633"
+        document.getElementById("nav-bar-pl").style.color = "#45f8f8"
         document.getElementById("nav-bar-pl").innerHTML = "P/L: +"+(0-parseFloat(value.rpnl));
       } else {
         document.getElementById("nav-bar-pl").style.color = "yellow"
@@ -1306,3 +1330,173 @@ function callCardDraggable(token, event) {
   headerElement.style.cursor = "pointer";
   makeElementDraggable(cardElement, headerElement);
 }
+
+const openPopupBtn = document.getElementById("openPopupBtn");
+const popupOverlay = document.getElementById("popupOverlay");
+const confirmBtn = document.getElementById("confirmBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const body = document.querySelector(".body");
+
+confirmBtn.addEventListener("click", () => {
+  response = modifiedOrderPlace(norenordnoF, "modifyorder", jDataF);
+  if (response) {
+    response.then((res) => {
+      showOrderMessage(res);
+    });
+  }
+  popupOverlay.style.display = "none";
+  body.classList.remove("blur");
+});
+
+cancelBtn.addEventListener("click", () => {
+  popupOverlay.style.display = "none";
+  body.classList.remove("blur");
+});
+
+function showWatchList() {
+  document.getElementById("popup-overlay-watch-list").style.display = "block";
+  body.classList.add("blur");
+  const jData = {
+    uid: uid,
+    wlname: "pro",
+  };
+  const jKey = userToken;
+  const res = postRequest("watchlist", jData, jKey);
+  res.then((response) => {
+    const watchList = response.data.values;
+    const watchListElement = document.getElementById("popup-watch-list");
+    watchListElement.innerHTML = "";
+    const renderStockList = (stocks) => {
+      watchListElement.innerHTML = `
+        <div style="display:flex;justify-content: flex-end;"><span class="close-modal" onclick="closeWatchList()"></span></div>
+        <div style="position:relative">
+        <input type="text" id="search-bar" placeholder="Search for stocks..." onkeyup="delayStocks(this)">
+        </div>
+        <div id="watch-search-container"></div><div class="watch-list">
+        ${stocks.map(stock => `
+          <div class="watch-list-stock-item" data-token="${stock.token}">
+            <span>${stock.tsym}</span>
+            <div style="display:flex;justify-content: flex-end; margin-top: 4px;"><span class="close-modal" onclick="removeStock('${stock.token}')"></span></div> 
+          </div>
+        `).join('')}</div>
+      `;
+    };
+    renderStockList(watchList);
+  });
+}
+
+function closeWatchList() {
+  document.getElementById("popup-overlay-watch-list").style.display = "none";
+  body.classList.remove("blur");
+}
+
+let watchSearchTimeout;
+
+function delayStocks (event) {
+  if (event.key === "Enter") {
+    filterStocks();
+  } else {
+    clearTimeout(watchSearchTimeout);
+    watchSearchTimeout = setTimeout(() => {
+      filterStocks();
+    }, 500);
+  }
+}
+
+function filterStocks() {
+  const searchTerm = document.getElementById("search-bar").value.toLowerCase();
+  if (searchTerm) {
+    const jData = {
+      uid: uid,
+      stext: searchTerm.toString(),
+      exch: ["NSE", "BSE"],
+    };
+    const jKey = userToken;
+
+    const res = postRequest("searchscrip", jData, jKey);
+    const resultsList = document.getElementById("watch-search-container");
+    res.then((response) => {
+      const data = response.data;
+      if (data.stat === "Ok") {
+        resultsList.innerHTML = "";
+        htmlData = `<div style="display:flex;justify-content: flex-end;margin-right: 5px; margin-top: 3px;"><span class="close-modal" onclick="removeSearchWatchList()"></span></div>`;
+        data.values.forEach((item) => {
+          htmlData += `
+                <li class="watch-result-item">
+                  <span>${item.exch}: ${item.tsym} - ${item.token}</span>
+                  <button onclick="addStock(${item.token}, event)">Add</button>
+                </li>
+              `;
+        });
+        resultsList.innerHTML = htmlData;
+      }
+    });
+    resultsList.style.display = "block";
+  } else {
+    removeSearchWatchList()
+  }
+}
+
+function removeSearchWatchList() {
+  document.getElementById("watch-search-container").style.display = "none";
+}
+
+function addStock(token, event) {
+  const jData = {
+    uid: uid,
+    wlname: "pro",
+    scrips: `NSE|${token}`,
+  };
+  const jKey = userToken;
+  const res = postRequest("watchlist_add", jData, jKey);
+  res.then((response) => {
+    if (response.stat === "Ok");
+    document.getElementById("watch-search-container").style.display = "none";
+    showWatchList();
+    const buttonElement = event.target
+    const stockItemElement = buttonElement.closest('.watch-result-item');
+    const stockNameElement = stockItemElement.querySelector('span');
+    const stockName = stockNameElement.textContent;
+    orderNames[`${token}`] = stockName.split(" ")[1].split('-')[0];
+    subscribeTouchline([`NSE|${token}`]);
+  })
+}
+
+function removeStock(token) {
+  const stockItem = document.querySelector(`[data-token="${token}"]`);
+  if (stockItem) {
+    const jData = {
+      uid: uid,
+      wlname: "pro",
+      scrips: `NSE|${token}`,
+    };
+    const jKey = userToken;
+    const res = postRequest("watchlist_delete", jData, jKey);
+    res.then((response) => {
+      if (response.stat === "Ok");
+      stockItem.remove();
+      unsubscribeTouchline([`NSE|${token}`]);
+      const orderTagItem = document.getElementById(`order-${token}`);
+      if (orderTagItem) {
+        orderTagItem.remove();
+      }
+    })
+  }
+}
+
+function submitWatchlist() {
+  const stockItems = document.querySelectorAll('.stock-item');
+  const newWatchlist = Array.from(stockItems).map(item => {
+    return {
+      token: item.getAttribute('data-token'),
+      tsym: item.querySelector('span').textContent
+    };
+  });
+
+  postRequest("saveWatchlist", { watchlist: newWatchlist }, jKey).then(response => {
+    alert('Watchlist saved successfully!');
+  }).catch(error => {
+    console.error('Error saving watchlist:', error);
+  });
+}
+

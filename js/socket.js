@@ -1,5 +1,20 @@
 const websocketUrl = API.websocket();
 var ctx2 = document.getElementById("stockChart").getContext("2d");
+var st;
+var et;
+var tokenId;
+var retries = 0;
+
+var oldV = 0;
+var newV = 0;
+
+uV = 0;
+
+var oldVNormal = 0;
+var newVNormal = 0;
+
+var socketCandle = [];
+ var isUpdated = false;
 Chart.register(ChartDataLabels);
 var chart2 = new Chart(ctx2, {
   type: "line",
@@ -9,8 +24,8 @@ var chart2 = new Chart(ctx2, {
       {
         label: "Price",
         data: [],
-        borderColor: "rgb(51, 255, 64)",
-        borderWidth: 1.5,
+        borderColor: "rgb(173, 255, 178)",
+        borderWidth: 0.5,
         fill: true,
         backgroundColor: "rgba(0,0,0,0)",
         pointRadius: 0,
@@ -21,8 +36,8 @@ var chart2 = new Chart(ctx2, {
         label: "Volume",
         data: [],
         yAxisID: "volume-axis",
-        backgroundColor: "rgb(255, 255, 255)",
-        barPercentage: 0.5,
+        backgroundColor: "rgba(58, 222, 255, 0.52)",
+        barPercentage: 0.3,
         parsing: {
           yAxisKey: "y",
         },
@@ -31,18 +46,41 @@ var chart2 = new Chart(ctx2, {
   },
   options: {
     animation: false,
+    layout: { padding: { left: 10, right: 50 } },
     scales: {
+      "price-axis": { position: "left" },
       "volume-axis": { display: false, beginAtZero: true, position: "right" },
     },
     plugins: {
+      title: {
+        display: true,
+        text: "",
+        align: "end",
+        position: "top",
+        font: { size: 16, weight: "bold" },
+      },
+      annotation: {
+        annotations: {
+          line1: {
+            type: "line",
+            xScaleID: "x",
+            yScaleID: "price-axis",
+            yMin: 0,
+            yMax: 0,
+            borderColor: "rgb(240, 255, 128)",
+            borderWidth: 0.5,
+            borderDash: [5, 5],
+          },
+        },
+      },
       datalabels: {
         align: "right",
         anchor: "end",
-        offset: -50,
+        offset: 0,
         backgroundColor: "rgba(0, 0, 0, 0)",
         borderRadius: 4,
-        color: "rgba(255, 255, 255, 0.78)",
-        font: { weight: "bold" },
+        color: "rgba(255, 255, 255, 0.81)",
+        font: { size: "10px" },
         formatter: function (value, context) {
           return "";
         },
@@ -93,17 +131,21 @@ function connectWebSocket() {
     websocket.send(JSON.stringify(connectRequest));
     setTimeout(() => {
       subscribeTouchline(["NSE|26000"]);
-      Object.keys(orderNames).forEach((orderToken) => {
-        subscribeTouchline([`NSE|${orderToken}`]);
-      });
 
-      for (let index = 0; index < stockTokenList.length; index++) {
-        const token = stockTokenList[index];
-        const name = stockSymbolList[index]
-        orderNames[token] = name;
-        subscribeTouchline([`NSE|${token}`]);
-      }
-    }, 3000);
+      const jData = {
+        uid: uid,
+        wlname: "pro",
+      };
+      const jKey = userToken;
+      const res = postRequest("watchlist", jData, jKey);
+      res.then((response) => {
+        const watchList = response.data.values;
+        watchList.forEach(item => {
+          orderNames[item.token] = item.tsym;
+          subscribeTouchline([`NSE|${item.token}`]);
+        })
+      });
+    }, 2000);
   };
 
   websocket.onmessage = function (event) {
@@ -134,6 +176,7 @@ function connectWebSocket() {
           updateOrderPos(message);
           if (message.lp) {
             updateCreateOrder(message);
+            updateHoldingData(message);
           }
         }
 
@@ -164,18 +207,59 @@ function connectWebSocket() {
   };
 }
 
+async function updateHoldingData(data) {
+  const watchPlList = document.getElementsByClassName("watch-pl");
+  for (let index = 0; index < watchPlList.length; index++) {
+    const element = watchPlList[index];
+    const token = element.dataset.watchToken;
+    if(token === data.tk) {
+      const buyPrc = parseFloat(element.dataset.watchPrc);
+      const qty = parseFloat(element.dataset.watchQty)
+      if (data) {
+        const pnL = ((data.lp - buyPrc)* qty).toFixed(2);
+        element.innerHTML = pnL;
+        element.style.color = pnL > 0? "#00b738": pnL < 0? "#d70909":"black";
+        const totalbuy = document.getElementById(`watch-pl-buy-${token}`);
+        if (totalbuy){
+          totalbuy.innerHTML = (qty*data.lp).toFixed(2);
+        }
+      }
+    }
+  }
+}
+
 function updateGraph(data) {
   let token = document.getElementById('chart-popup').dataset.token;
   if (data.tk === token) {
+    if (data.v && oldVNormal < 1) {
+      oldVNormal = parseInt(graphData[graphData.length -1].vol);
+    } else if (data.v && oldVNormal > 0) {
+      newVNormal = parseInt(data.v) - oldVNormal;
+    }
     const date = new Date(data.ft * 1000);
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const formattedTime = `${hours}:${minutes}`;
+    for (let index = 0; index < 5; index++) {
+      times.pop();
+      volumes.pop();
+    }
+    if (times[times.length - 1] === formattedTime) {
+      prices[times.length - 1] = data.lp;
+      volumes[times.length -1] = newVNormal.toString();
+    } else {
+      times.push(formattedTime);
+      prices.push(data.lp);
+      volumes.push("0");
+      oldVNormal = parseInt(oldVNormal) + parseInt(newVNormal);
+      newVNormal = 0;
+    }
+    volumes = [...volumes, 0, 0, 0, 0, 0];
+    times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
 
-    times.push(formattedTime);
-    prices.push(data.lp);
     chart2.data.labels = times;
     chart2.data.datasets[0].data = prices;
+    chart2.data.datasets[1].data = volumes;
     var newPrice = data.lp;
     chart2.options.plugins.datalabels.formatter = function(value, context) {
       const datasetIndex = context.datasetIndex;
@@ -188,14 +272,29 @@ function updateGraph(data) {
         return '';
       }
     };
+    chart2.options.plugins.annotation.annotations.line1.yMin = newPrice;
+    chart2.options.plugins.annotation.annotations.line1.yMax = newPrice;
     chart2.update();
   }
 }
 
 function updateCandleStick(data) {
+  if (!isUpdated && candlestickData.length > 0) {
+    candlestickData.forEach(item => {
+      socketCandle.push(item);
+    })
+    isUpdated = true;
+  }
+
   let token = document.getElementById('main-graph').dataset.token;
   if (data.tk === token) {
-    var newCandlestickData = candlestickData.map((item) => ({
+    if (oldV < 1) {
+      oldV = parseInt(candlestickData[candlestickData.length -1].vol);
+    }
+    if (data.v && oldV > 0) {
+      newV = parseInt(data.v) - oldV;
+    }
+    var newCandlestickData = socketCandle.map((item) => ({
       x: item.t,
       o: item.o,
       h: item.h,
@@ -203,30 +302,89 @@ function updateCandleStick(data) {
       c: item.c,
     }));
 
-    var newVolumeData = candlestickData.map((item) => ({
+    var newVolumeData = socketCandle.map((item) => ({
       x: item.t,
-      y: item.v,
+      y: item.v ? item.v : `${0}`,
     }));
     const position = newCandlestickData.length - 1;
 
-    if (data.lp) {
-      newCandlestickData[position].c = data.lp;
+    if (data.lp || data.v) {
+      var hp = newCandlestickData[position].h;
+      var lp = newCandlestickData[position].l;
+      var newDate = new Date(data.ft * 1000);
+      
+      const minutes = newDate.getMinutes();
+      const oldDate = new Date(newCandlestickData[position].x);
+      newDate.setSeconds(oldDate.getSeconds());
+      newDate.setMilliseconds(oldDate.getMilliseconds())
+      const oldMinutes = oldDate.getMinutes();
+      if (minutes === oldMinutes) {
+        if (data.lp) {
+          newCandlestickData[position].c = data.lp;
+          if (parseFloat(data.lp) > parseFloat(hp)) {
+            newCandlestickData[position].h = data.lp;
+            socketCandle[position].h = data.lp;
+          }
+          if (parseFloat(data.lp) < parseFloat(lp)) {
+            newCandlestickData[position].l = data.lp;
+            socketCandle[position].l = data.lp;
+            socketCandle[position].c = data.lp;
+          } 
+        }
+        if (data.v) {
+          uV = parseInt(data.v);
+          newVolumeData[position].y = newV.toString();
+          socketCandle[position].v = newV.toString();
+        }
+      } else {
+        const newObject = {
+          x: newDate.getTime(),
+          o: data.lp,
+          h: data.lp,
+          l: data.lp,
+          c: data.lp,
+          v: "0",
+        }
+
+        oldV = uV;
+        newV = 0;
+        newCandlestickData.push(newObject);
+        socketCandle.push({
+          t: newDate.getTime(),
+          o: data.lp,
+          h: data.lp,
+          l: data.lp,
+          c: data.lp,
+          v: "0",
+        });
+      }
     }
 
     chart.data.datasets[0].data = newCandlestickData;
-    chart.data.datasets[1].data = [...newVolumeData, {x: newCandlestickData[newCandlestickData.length - 1].x + 60000,y: ''}, {x: newCandlestickData[newCandlestickData.length - 1].x + 120000,y: ''}];
+    var extraVol = [];
+    const mul = 60000;
+    var extraVolSize = parseInt(newCandlestickData.length / 3)+1;
+    for (let index = 1; index < extraVolSize; index++) {
+      extraVol.push({x: newCandlestickData[newCandlestickData.length - 1].x + index*mul,y: ''})
+    }
+    chart.data.datasets[1].data = [...newVolumeData, ...extraVol];
     var newPrice = data.lp;
     chart.options.plugins.datalabels.formatter = function(value, context) {
       const datasetIndex = context.datasetIndex;
       const dataIndex = context.dataIndex;
-      const dataLength = context.chart.data.datasets[datasetIndex].data.length;
       const datasetType = context.chart.data.datasets[datasetIndex].type || 'candlestick';
-      if (dataIndex === dataLength - 1 && datasetType === 'candlestick') {
-        return `${newPrice}`;
-      } else {
+      if (dataIndex === 0 && datasetType === 'bar') {
+        return `${newVolumeData[0].y}`
+      }
+      else {
         return '';
       }
     };
+    chart.options.plugins.annotation.annotations.line1.yMin = newPrice;
+    chart.options.plugins.annotation.annotations.line1.yMax = newPrice;
+    chart.options.plugins.annotation.annotations.label1.content = newPrice;
+    chart.options.plugins.annotation.annotations.label1.xValue = newCandlestickData[newCandlestickData.length - 1].x;
+    chart.options.plugins.annotation.annotations.label1.yValue = newPrice;
     chart.update();
     document.getElementById("current-price").innerText = newCandlestickData[newCandlestickData.length - 1].c;
     document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;
@@ -298,12 +456,12 @@ function updateOrderPos(data) {
   function markAsDone(element) {
     element.dataset.posStatus = "DONE";
     element.innerText = "Done";
-    element.style.color = "green";
+    element.style.color = "#bbffbb";
   }
 
   function updatePosition(element, pos) {
     element.innerText = pos > 0 ? `+${pos}` : pos;
-    element.style.color = pos > 0 ? "green" : "red";
+    element.style.color = pos > 0 ? "#bbffbb" : "#ff9898";
   }
 }
 
@@ -366,9 +524,14 @@ function unsubscribeOrderUpdate() {
 
 function createNiftyDataField(data) {
   const niftyTag = document.getElementById("nifty-tag");
-  if (data && data.ft && data.lp && data.pc) {
+  if (data && data.lp && data.pc) {
     var sym;
-    const date = new Date(data.ft * 1000);
+    var date;
+    if (data.ft) {
+      date = new Date(data.ft * 1000);
+    } else {
+      date = new Date();
+    }
     const options = {
       hour: "2-digit",
       minute: "2-digit",
@@ -381,7 +544,7 @@ function createNiftyDataField(data) {
     }
 
     niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
-    niftyTag.style.backgroundColor = parseFloat(data.pc) >= 0 ? "#77d677" : "#f46c6c";
+    niftyTag.style.backgroundColor = parseFloat(data.pc) >= 0 ? "#82dbcadb" : "#e99090e6";
   }
 }
 
@@ -429,7 +592,7 @@ function createOrdersDataField(data) {
       `;
     }
     orderTag = ordersTag.querySelector("#order-" + data.tk);
-    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#77d677" : parseFloat(data.pc) < 0 ? "#f46c6c" : "#938662";
+    orderTag.style.backgroundColor = parseFloat(data.pc) > 0 ? "#82dbcadb" : parseFloat(data.pc) < 0 ? "#e99090e6" : "#938662";
   }
 
   if (isStoreDepth) {
@@ -463,11 +626,11 @@ function showPopup(orderTag) {
   // Update the popup content with buttons
   popup.innerHTML = `
     <p>${name}</p>
-    <button style="background-color: #02c209;" onclick="handleBuy(${tokenId})">Buy</button>
-    <button style="background-color: #ff1d42;" onclick="handleSell(${tokenId})">Sell</button>
+    <button style="background-color: #bbffbb" onclick="handleBuy(${tokenId})">Buy</button>
+    <button style="background-color: #ff9898;" onclick="handleSell(${tokenId})">Sell</button>
     <button onclick="handleDetails(${tokenId}, ${orderTag.getBoundingClientRect().left}, ${orderTag.getBoundingClientRect().top})">Chart</button>
     <button style="background-color: #9e5fa9;" onclick="addToDetailsList('${tokenId}')">Card</button>
-    <button style="background-color: #02c209;" data-name=" ${name}" onclick="setData(${tokenId}, this)">Candle</button>
+    <button style="background-color:rgb(155, 255, 155);" data-name=" ${name}" onclick="setData(${tokenId}, this)">Candle</button>
   `;
 
   // Position the popup
@@ -541,12 +704,31 @@ function closeChart() {
 }
 
 function handleDetails(tokenId, left, top) {
+  document.getElementById('chart-popup-timeframe').value = "0";
+  let name = '';
+  if (tokenId === 26000) {
+    name = 'NIFTY 50'
+  } else {
+    name = document.getElementById(`order-${tokenId}`).dataset.name;
+  }
+
+  chart2.options.plugins.title.text = name;
   const chartPopup = document.getElementById('chart-popup');
   chartPopup.dataset.token = tokenId;
   chartPopup.style.top = `${top}px`;
   chartPopup.hidden = false;
-  chartPopup.style.minWidth = '350px';
-  chartPopup.style.maxHeight = '180px'
+  var eWidth = window.innerWidth;
+  if (eWidth > 450) {
+    eWidth = eWidth  * 70/100;
+  } else {
+    eWidth = 350;
+  }
+
+  if (eWidth > 550) {
+    eWidth = 500;
+  }
+  chartPopup.style.minWidth = eWidth+'px';
+  //chartPopup.style.maxHeight = '180px';
   document.getElementById('cls-btn-chart').addEventListener("click", (event) => {
     closeChart();
   });
@@ -605,11 +787,119 @@ async function getChartData(tokenId) {
   const now = new Date();
   const marketEndTime = new Date(now);
   marketEndTime.setHours(15, 30, 0, 0);
-  const endTime = now > marketEndTime ? marketEndTime : now;
-  var et = Math.floor(endTime.getTime() / 1000);
+  const morningLimit = new Date(now); 
+  morningLimit.setHours(9, 35, 0, 0);
+  let endTime;
+  let startTime;
+  if (now < morningLimit) {
+    if (now.getDay() === 1) {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 3);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    } else {
+      endTime = new Date(now);
+      endTime.setDate(now.getDate() - 1);
+      endTime.setHours(15, 15, 0, 0);
+      startTime = new Date(endTime);
+      endTime = new Date(now);
+    }
+    
+  } else {
+    endTime = now > marketEndTime ? marketEndTime : now;
+    startTime = new Date(endTime);
+  }
+  et = Math.floor(endTime.getTime() / 1000);
+  startTime.setMinutes(startTime.getMinutes() - 120);
+  st = Math.floor(startTime.getTime() / 1000);
 
-  const startTime = new Date(endTime);
-  startTime.setMinutes(startTime.getMinutes() - parseInt(180));
+  const jData = {
+    uid: uid,
+    exch: "NSE",
+    token: tokenId.toString(),
+    st: st.toString(),
+    et: et.toString()
+  }
+  const jKey = userToken;
+  getTimeSeries(jData, jKey, startTime, tokenId);
+  retries++;
+}
+
+function getTimeSeries(jData, jKey, startTime, tokenId) {
+  postRequest("TPSeries", jData, jKey)
+  .then((res) => {
+    if (res && res.data && res.data.length > 60) {
+      const stockData = res.data;
+      chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv, vol: item.v }; });
+      var newChartData = chartData.reverse();
+      graphData = newChartData.map((item) => ({
+        x: item.t,
+        c: item.c,
+        v: item.v,
+        vol: item.vol
+      }));
+      times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
+      prices = graphData.map(item => item.c);
+      volumes = graphData.map(item => item.v);
+      volumes = [...volumes, 0, 0, 0, 0, 0];
+      times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1],times[times.length - 1], times[times.length - 1]]
+      createGraph();
+    } else {
+      if (retries < 5) {
+        startTime.setDate(startTime.getDate() - 1);
+        startTime.setHours(15, 0, 0, 0);
+        st = Math.floor(startTime.getTime() / 1000);
+        const jData = {
+          uid: uid,
+          exch: "NSE",
+          token: tokenId.toString(),
+          st: st.toString(),
+          et: et.toString()
+        }
+        setTimeout(() => { getTimeSeries(jData, jKey, startTime, tokenId); }, 100);
+        retries++;
+      }
+    }
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+  });
+}
+
+function customChartData(type) {
+  var tokenId = document.getElementById('chart-popup').dataset.token;
+  var chartData = [];
+  const userToken = localStorage.getItem("pro-userToken");
+  const now = new Date();
+  const marketEndTime = new Date(now);
+  marketEndTime.setHours(15, 30, 0, 0);
+
+  let endTime = now > marketEndTime ? marketEndTime : now;
+  let startTime = new Date(endTime);
+  let dayValue = 0;
+  if (type === "1") {
+    dayValue = 0;
+  }
+  if (type === "2") {
+    dayValue = 7;
+  }
+
+  if (type === "3") {
+    dayValue = 30;
+  }
+  if (type === "4") {
+    dayValue = 180;
+  }
+
+  if (type === "0") {
+    getChartData(tokenId);
+    return;
+  }
+  startTime.setDate(endTime.getDate() - dayValue);
+  startTime.setHours(9, 15, 0, 0);
+  var et = Math.floor(endTime.getTime() / 1000);
+  startTime.setMinutes(startTime.getMinutes() - parseInt(slider.value));
   const st = Math.floor(startTime.getTime() / 1000);
   const jData = {
     uid: uid,
@@ -623,16 +913,66 @@ async function getChartData(tokenId) {
   .then((res) => {
     if (res && res.data && res.data.length > 0) {
       const stockData = res.data;
-      chartData = stockData.map((item) => { return { t: convertToMilliseconds(item.time), c: item.intc, v: item.intv }; });
+      if (stockData.length > 2000) {
+        const aggregateHourly = (data) => {
+          const hourlyData = [];
+          for (let i = 0; i < data.length; i += 60) {
+            const hourData = data.slice(i, i + 60);
+            const hourAvg = hourData.reduce((sum, d) => {
+              const intc = parseInt(d.intc, 10);
+              return sum + (isNaN(intc) ? 0 : intc);
+            }, 0) / hourData.length;
+            const hourSum = hourData.reduce((sum, d) => {
+              const intv = parseInt(d.intv, 10);
+              return sum + (isNaN(intv) ? 0 : intv);
+            }, 0);
+            hourlyData.push({ time: hourData[0].time, c: parseFloat(hourAvg).toFixed(2), v: hourSum });
+          }
+          return hourlyData;
+        };
+        const aggregatedData = aggregateHourly(stockData);
+        chartData = aggregatedData.map((item) => {
+          return { t: convertToMilliseconds(item.time), c: item.c, v: item.v };
+        });
+      } else if (stockData.length > 150 < 1000) {
+        const aggregateHourly = (data) => {
+          const hourlyData = [];
+          for (let i = 0; i < data.length; i += 10) {
+            const hourData = data.slice(i, i + 10);
+            const hourAvg = hourData.reduce((sum, d) => {
+              const intc = parseInt(d.intc, 10);
+              return sum + (isNaN(intc) ? 0 : intc);
+            }, 0) / hourData.length;
+            const hourSum = hourData.reduce((sum, d) => {
+              const intv = parseInt(d.intv, 10);
+              return sum + (isNaN(intv) ? 0 : intv);
+            }, 0);
+            hourlyData.push({ time: hourData[0].time, c: parseFloat(hourAvg).toFixed(2), v: hourSum });
+          }
+          return hourlyData;
+        };
+        const aggregatedData = aggregateHourly(stockData);
+        chartData = aggregatedData.map((item) => {
+          return { t: convertToMilliseconds(item.time), c: item.c, v: item.v };
+        });
+      } else {
+        chartData = stockData.map((item) => {
+          return { t: convertToMilliseconds(item.time), c: parseInt(item.intc, 10), v: parseInt(item.intv, 10) };
+        });
+      }
+
       var newChartData = chartData.reverse();
       graphData = newChartData.map((item) => ({
         x: item.t,
         c: item.c,
         v: item.v,
       }));
-      times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3))
+
+      times = graphData.map(item => new Date(item.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).slice(0, -3));
       prices = graphData.map(item => item.c);
       volumes = graphData.map(item => item.v);
+      volumes = [...volumes, 0, 0, 0, 0, 0];
+      times = [...times, times[times.length - 1], times[times.length - 1], times[times.length - 1], times[times.length - 1], times[times.length - 1]];
       createGraph();
     }
   })
@@ -657,6 +997,8 @@ function createGraph() {
       return '';
     }
   };
+  chart2.options.plugins.annotation.annotations.line1.yMin = newPrice;
+  chart2.options.plugins.annotation.annotations.line1.yMax = newPrice;
   chart2.update();
 }
 
@@ -892,14 +1234,14 @@ function refreshCardData(data) {
 
   if (data.lp) {
     elements.lastPrice.textContent = data.lp;
-    elements.lastPrice.parentNode.style.color = data.lp < openPrice ? 'red' : 'green';
+    elements.lastPrice.parentNode.style.color = data.lp > openPrice ? "rgba(151, 255, 236, 0.86)" : "rgba(255, 157, 157, 0.9)";
   }
 
   if (data.pc) {
     const changeValue = openPrice + (data.pc * openPrice / 100);
     const change = (changeValue - openPrice).toFixed(2);
     elements.change.innerText = `${change} (${data.pc}%)`;
-    elements.change.parentNode.style.color = data.pc < 0 ? 'red' : 'green';
+    elements.change.parentNode.style.color = data.pc > 0 ? "rgba(151, 255, 236, 0.86)" : "rgba(255, 157, 157, 0.9)";
   }
 
   if (data.v) elements.volume.innerText = data.v;
@@ -963,4 +1305,18 @@ function calculateTotalPnL(orderDetailsForPnL) {
 
     return { stock: stock.stock, totalPnL: totalPnL.toFixed(2) };
   });
+}
+
+function exportChart() {
+  const link = document.createElement("a");
+  link.href = chart2.toBase64Image();
+  let date = Math.floor(Date.now() / 1000);
+  link.download = "chart"+"_"+date+".png";
+  link.click();
+}
+
+function refreshSocketCandle() {
+  socketCandle = [];
+  isUpdated = false;
+  oldV = 0;
 }

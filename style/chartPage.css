@@ -1,15 +1,5 @@
-.main-container {
-    padding: 15px 5px 5px 5px;
-}
-
 #main-graph {
-    background-color: #e1e1e1;
-}
-
-@media (max-width: 500px) {
-    .main-container {
-        margin-top: 35px;
-    }
+    background-color: #1a1c28;
 }
 
 @media (min-width: 500px) {
@@ -26,7 +16,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 2px;
-    background-color: #262121;
+    background-color: #1b1a1a;
     color: whitesmoke;
     font-size: 12px;
 }
@@ -137,7 +127,6 @@
     color: whitesmoke;
 }
 
-/* Style the checkbox container */
 .checkbox-container {
     padding-top: 4px;
     padding-bottom: 4px;
@@ -149,7 +138,6 @@
     user-select: none;
 }
 
-/* Hide the browser's default checkbox */
 .checkbox-container input {
     position: absolute;
     opacity: 0;
@@ -158,7 +146,6 @@
     width: 0;
 }
 
-/* Create a custom checkbox */
 .checkmark {
     position: absolute;
     top: 0;
@@ -171,33 +158,27 @@
     margin-bottom: 4px;
 }
 
-/* On mouse-over, add a grey background color */
 .checkbox-container:hover input~.checkmark {
     background-color: #aaaaaa;
 }
 
-/* When the checkbox is checked, change the background and checkmark color */
 .checkbox-container input:checked~.checkmark {
     background-color: #2196F3;
-    /* Blue background */
 }
 
-/* Create the checkmark/indicator (hidden when not checked) */
 .checkmark:after {
     content: "";
     position: absolute;
     display: none;
 }
 
-/* Show the checkmark when checked */
 .checkbox-container input:checked~.checkmark:after {
     display: block;
 }
 
-/* Style the checkmark/indicator */
 .checkbox-container .checkmark:after {
-    left: 6px;
-    top: 3px;
+    left: 5px;
+    top: 2px;
     width: 3px;
     height: 7px;
     border: solid rgb(0, 0, 0);
@@ -212,7 +193,7 @@
     justify-content: center;
     align-items: center;
     padding: 2px;
-    background-color: #27282a;
+    background-color: #1b1a1a;
     font-size: 12px;
     font-weight: 600;
     color: whitesmoke;

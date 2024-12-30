@@ -1,0 +1,316 @@
+#analyze-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-items: center;
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+  padding: 5px;
+  background-color: rgb(25, 24, 24);
+}
+
+.tabs {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  justify-items: center;
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+  padding: 5px;
+  background-color: rgb(23 24 38)
+}
+
+.tabs button {
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: double;
+  border: none;
+  transition: background-color 0.3s ease;
+  border-radius: 2px;
+  height: 20px;
+  min-width: 60px;
+}
+.tab-button {
+  padding: 0px 10px;
+  cursor: pointer;
+  border: none;
+  background-color: #2a2323;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  color: #595959;
+}
+
+.tab-button:hover {
+  background-color: #e0dcdc;
+}
+
+/* Styling for active tab */
+.tab-button.active {
+  background-color: #315c81;
+  color: #fff;
+}
+
+/* Styling for tab panels */
+.tab-panel {
+  display: none;
+  padding: 20px;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+#marketDropdown {
+  margin: 5px;
+  padding: 5px;
+  border: 1px solid #8cc4fb;
+  border-radius: 5px;
+  background-color: #f9f9f900;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+#marketDropdown label {
+  margin-bottom: 5px;
+  display: block;
+  font-size: 15px;
+  color: #c2c2c2;
+  font-weight: 600;
+}
+
+.sub-dropdown {
+  display: grid;
+  justify-content: center;
+  text-align: center;
+  margin-right: 10px;
+}
+
+#marketDropdown select {
+  width: 120px;
+  padding: 3px 0px;
+  border: 1px solid #414141;
+  border-radius: 4px;
+  background-color: #232020;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  color: #a9a4a4;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+/* Base styles for the dropdown container */
+.custom-select-wrapper {
+  display: block;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+  min-width: 70vw;
+  max-width: 70vw;
+}
+
+/* Styles for the dropdown trigger */
+.custom-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #f2f2f2;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.custom-select__trigger span {
+  margin-right: 10px;
+}
+
+/* Arrow icon in the trigger */
+.arrow-2 {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid #333;
+  border-bottom: 2px solid #333;
+  transform: rotate(-45deg);
+}
+
+/* Styles for the dropdown options */
+.custom-options {
+  display: none;
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  border: 1px solid #ccc;
+  border-top: none;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+  max-height: 200px;
+  /* Set a max-height for the dropdown */
+  overflow-y: auto;
+  /* Add scroll for overflow */
+  width: calc(100% - 2px);
+  /* Adjust width to fit the container */
+}
+
+.custom-option {
+  display: block;
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  /* Add a separator between options */
+}
+
+.custom-option:last-child {
+  border-bottom: none;
+  /* Remove bottom border for the last option */
+}
+
+.custom-option:hover {
+  background-color: #e9e9e9;
+}
+
+/* Highlight selected options */
+.custom-option.selected {
+  background-color: #4CAF50;
+  /* Green background for selected items */
+  color: white;
+  /* White text color for better contrast */
+}
+
+/* Styles for the button to get selected values */
+.custom-select__button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.custom-select__button:hover {
+  background-color: #555;
+}
+
+.custom-select.open .custom-options {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.graphList {
+  display: block;
+}
+
+#analyze-table-list {
+  display: grid;
+  justify-content: center;
+  width: 100%;
+}
+
+#analyze-table-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#analyze-table-list th,
+#analyze-table-list td {
+  border: 0.3px solid #ebf0ff;
+  padding: 10px;
+  text-align: center;
+}
+
+#analyze-table-list th {
+  background-color: #151515;
+  font-weight: bold;
+}
+
+/* Alternating row colors */
+#analyze-table-list tr:nth-child(even) {
+  background-color: #322626;
+}
+#analyze-table-list table tr:hover {
+  background-color: #1dd6e37a;
+}
+
+/* Responsive styles for laptop and mobile */
+@media (max-width: 768px) {
+
+  #analyze-table-list th,
+  #analyze-table-list td {
+      padding: 1px;
+      font-size: 12px;
+  }
+
+  .custom-select-wrapper {
+      min-width: 90vw;
+  }
+}
+
+a {
+  text-decoration: none;
+  color : rgb(205, 185, 185);
+}
+
+a :hover {
+  text-decoration: dotted;
+  text-decoration-color: #151515;
+}
+
+#holding-list {
+  background-color: #2a2323;
+  border: 1px solid #595959;
+  border-radius: 5px;
+  padding: 10px;
+  width: 100%;
+}
+
+#holdings-container {
+  margin-top: 30px;
+}
+
+.holding-header, .holding-item {
+  display: grid;
+  grid-template-columns: 4fr 4fr 4fr 4fr 4fr 4fr;
+  gap: 5px;
+  align-items: center;
+  padding: 5px;
+}
+
+.holding-header {
+  background-color: #1d1c1c;
+  color: #9e8e8e;
+  font-weight: bold;
+  border-bottom: 2px solid #595959;
+  font-size: 11px;
+}
+
+.holding-item {
+  background-color: #242b40;
+  color: whitesmoke;
+  border-bottom: 1px solid #595959;
+  font-size: 11px;
+}
+
+.holding-item:last-child {
+  border-bottom: none;
+}
+
+.holding-header span, .holding-item span {
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
