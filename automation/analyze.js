@@ -13,12 +13,8 @@ function predictTrend(ohlcData, passedMinutes) {
   if (passedMinutes < 30) {
     return;
   }
-  const shortTermMovingAverage = (STA = calculateMovingAverage(
-    ohlcData.slice(-5)
-  ));
-  const longTermMovingAverage = (LTA = calculateMovingAverage(
-    ohlcData.slice(-30)
-  ));
+  const shortTermMovingAverage = (STA = calculateMovingAverage(ohlcData.slice(-5)));
+  const longTermMovingAverage = (LTA = calculateMovingAverage(ohlcData.slice(-30)));
   const dayAvg = (DTA = calculateMovingAverage(ohlcData.slice(-passedMinutes)));
   if (shortTermMovingAverage.toFixed(3) < longTermMovingAverage.toFixed(3)) {
     return `STA:${shortTermMovingAverage} LTA:${longTermMovingAverage} DTA:${dayAvg} down`;
@@ -46,6 +42,7 @@ async function analyzeMarket() {
 
   for (let index = 0; index < stockSymbolList.length; index++) {
     const stockSymbol = stockSymbolList[index];
+    const token = stockTokenList[index];
     try {
       const payload = {
         uid: uid,
@@ -57,7 +54,7 @@ async function analyzeMarket() {
       };
 
       if (getRSICount < stockSymbolList.length) {
-        stockAnalyzeData[stockSymbol] = {
+        stockAnalyzeData[token] = {
           SDSMA: 0,
           LTA: 0,
           STA: 0,
@@ -71,7 +68,7 @@ async function analyzeMarket() {
           STLB: 0,
         };
         RSI = await getRSI(stockSymbol);
-        stockAnalyzeData[stockSymbol].RSI = RSI;
+        stockAnalyzeData[token].RSI = RSI;
         getRSICount++;
       }
 
@@ -108,16 +105,16 @@ async function analyzeMarket() {
             }
             predictTrend(ohlcData, passedMinutes);
             calculateBollingerBands(ohlcData);
-            stockAnalyzeData[stockSymbol].SDSMA = standardDeviationWithSma;
-            stockAnalyzeData[stockSymbol].LTA = LTA;
-            stockAnalyzeData[stockSymbol].STA = STA;
-            stockAnalyzeData[stockSymbol].DTA = DTA;
-            stockAnalyzeData[stockSymbol].LTUB = LTUB;
-            stockAnalyzeData[stockSymbol].LTMB = LTMB;
-            stockAnalyzeData[stockSymbol].LTLB = LTLB;
-            stockAnalyzeData[stockSymbol].STUB = STUB;
-            stockAnalyzeData[stockSymbol].STMB = STMB;
-            stockAnalyzeData[stockSymbol].STLB = STLB;
+            stockAnalyzeData[token].SDSMA = standardDeviationWithSma;
+            stockAnalyzeData[token].LTA = LTA;
+            stockAnalyzeData[token].STA = STA;
+            stockAnalyzeData[token].DTA = DTA;
+            stockAnalyzeData[token].LTUB = LTUB;
+            stockAnalyzeData[token].LTMB = LTMB;
+            stockAnalyzeData[token].LTLB = LTLB;
+            stockAnalyzeData[token].STUB = STUB;
+            stockAnalyzeData[token].STMB = STMB;
+            stockAnalyzeData[token].STLB = STLB;
           }
         })
         .catch((error) => {
@@ -175,38 +172,32 @@ function calculateSMA(data) {
 }
 
 function calculateStandardDeviation(data, period) {
-  let start = data.length % period;
   let sdsma = [];
-  for (let index = start; index < data.length; index += period) {
-    let sma =
-      data.slice(index, period + index).reduce((sum, val) => sum + val, 0) /
-      period;
-    let squareValue = data
-      .slice(index, period + index)
-      .reduce((sum, val) => sum + Math.pow(val - sma, 2), 0);
+  for (let index = data.length; index >= 0; index -= period) {
+    
+    let sma = data.slice(index - period, index).reduce((sum, val) => sum + val, 0) / period;
+    if(index === data.length) {
+    }
+    let squareValue = data.slice(index - period, index).reduce((sum, val) => sum + Math.pow(val - sma, 2), 0);
     sdsma.push({ sd: Math.sqrt(squareValue / period), sma: sma });
   }
-  return sdsma.filter((n) => n);
+  sdsma.filter((n) => n);
+  sdsma.reverse();
+  return sdsma;
 }
 
-function calculateBollingerBands(data, period = 15) {
+function calculateBollingerBands(data, period = 3) {
   data = data.map((element) => parseFloat(element.close));
   standardDeviationWithSma = calculateStandardDeviation(data, period);
   standardDeviationWithSma = standardDeviationWithSma.filter(
     (element) => element.sd != 0 && element.sma != 0
   );
   const newSDArray = standardDeviationWithSma.map((element) => element.sd);
-  const lastestSD =
-    standardDeviationWithSma[standardDeviationWithSma.length - 1].sd;
-  const avgSD =
-    newSDArray.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
-    newSDArray.length;
+  const lastestSD = standardDeviationWithSma[standardDeviationWithSma.length - 1].sd;
+  const avgSD = newSDArray.reduce((a, b) => parseFloat(a) + parseFloat(b)) / newSDArray.length;
   const newSmaArray = standardDeviationWithSma.map((element) => element.sma);
-  const latestSma =
-    standardDeviationWithSma[standardDeviationWithSma.length - 1].sma;
-  LTMB =
-    newSmaArray.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
-    newSmaArray.length;
+  const latestSma = standardDeviationWithSma[standardDeviationWithSma.length - 1].sma;
+  LTMB = newSmaArray.reduce((a, b) => parseFloat(a) + parseFloat(b)) / newSmaArray.length;
   LTUB = LTMB + avgSD;
   LTLB = LTMB - avgSD;
 
@@ -215,11 +206,9 @@ function calculateBollingerBands(data, period = 15) {
   STLB = latestSma - lastestSD;
 }
 
-//analyzeMarket();
-
-// setInterval(() => {
-//   console.log(stockAnalyzeData);
-// }, 30000);
-// setInterval(() => {
-//   analyzeMarket();
-// }, 50000);
+analyzeMarket();
+//console.log(stockAnalyzeData);
+setInterval(() => {
+  analyzeMarket();
+  //console.log(stockAnalyzeData);
+}, 30000);

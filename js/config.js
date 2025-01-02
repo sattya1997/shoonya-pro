@@ -81,10 +81,52 @@ var oldOrderValue = 0;
 
 var orderValid = false;
 //automate vars
-var standardDeviationWithSma = [];
-var stockSymbolList = ["CESC-EQ", "NCC-EQ", "HUDCO-EQ", "TATAMOTORS-EQ", "ONGC-EQ","OIL-EQ" ,"ICICIB22-EQ"];
-var stockTokenList = ["628","2319", "20825","3456","2475","17438", "522"];
+// var standardDeviationWithSma = [];
+// var stockSymbolList = ["CESC-EQ", "NCC-EQ", "HUDCO-EQ", "TATAMOTORS-EQ", "ONGC-EQ","OIL-EQ" ,"ICICIB22-EQ"];
+// var stockTokenList = ["628","2319", "20825","3456","2475","17438", "522"];
+var stockSymbolList = ["CESC-EQ"];
+var stockTokenList = ["628"];
 var stockAnalyzeData = {};
+
+const tokenFromStorage = localStorage.getItem('autoToken');
+const qtyFromStorage = localStorage.getItem('autoQty');
+const symbolFromStorage = localStorage.getItem('autoSymbol');
+var autoBuyAttempt = 0;
+var autoSellAttempt = 0;
+var autoToken = '';
+var autoSymbol = '';
+var autoQty = 0;
+var autoBought = false;
+var autoBuyPending = false;
+var autoSellPending = false;
+var autoBuyPrice = 0;
+
+if (tokenFromStorage) {
+  autoToken = tokenFromStorage;
+}
+if (qtyFromStorage) {
+  autoQty = qtyFromStorage;
+}
+
+if (symbolFromStorage) {
+  autoSymbol = symbolFromStorage;
+}
+
+const mnm = {
+  "t": "tf",
+  "e": "NSE",
+  "tk": "26000",
+  "ft": "1735727315",
+  "toi": "165466000",
+  "lp": "187"
+}
+
+if (qtyFromStorage) {
+  autoQty = qtyFromStorage;
+}
+
+
+
 var LTA = 0;
 var STA = 0;
 var DTA = 0;
@@ -97,7 +139,6 @@ var LTMB = 0;
 var STMB = 0;
 
 var orderDetailsForPnL = [];
-var showPnLTrue = false;
 var activeTab = 1;
 
 class CircularBuffer {

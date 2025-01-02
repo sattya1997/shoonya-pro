@@ -297,6 +297,7 @@ async function getCandlestickChartData() {
       chart.options.scales.x.ticks.color = "rgba(205, 205, 205, 0.6)";
       chart.options.scales.x.grid = { color: "rgba(173, 151, 255, 0.1)" };
       chart.options.scales.priceAxis.grid = { color: "rgba(173, 151, 255, 0.1)" };
+      chart.options.scales.volumeAxis.display = false;
       chart.update();
       document.getElementById("current-price").innerText = newPrice;
       document.getElementById("current-vol").innerText = newVolumeData[newVolumeData.length - 1].y;

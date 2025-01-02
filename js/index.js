@@ -127,7 +127,7 @@ async function searchScrip() {
 }
 
 async function handleBuySellButtonClickFromResultsList(token, btnType) {
-  getDetails(token, false, btnType);
+  await getDetails(token, false, btnType);
 }
 
 function addToTagList(token, name) {
@@ -947,6 +947,15 @@ function modifyOrder(modifyType, buttonElement) {
     createModifiedPlaceOrderForm(jData, buttonElement);
   }
 
+  if (modifyType === 4) {
+    autoToken = parseInt(parentElement.getAttribute("token"));
+    autoQty = parseInt(parentElement.getAttribute("qty"));
+    localStorage.setItem('autoToken', autoToken);
+    localStorage.setItem('autoQty', autoQty);
+    autoSymbol = parentElement.getAttribute("tsym");
+    localStorage.setItem('autoSymbol', autoSymbol);
+  }
+
   if (response) {
     response.then((res) => {
       showOrderMessage(res);
@@ -1016,6 +1025,16 @@ function getOrders() {
             order.status != "CANCELED"
           ) {
             buyOrderCount++;
+            if (parseInt(order.token) === parseInt(autoToken) && order.status === "COMPLETE") {
+              autoBought = true;
+              autoBuyAttempt = 0;
+              autoSellAttempt = 0;
+              autoBuyPrice = order.avgprc || order.prc;
+            }
+
+            if (parseInt(order.token) === parseInt(autoToken) && order.status === "OPEN") {
+              autoBuyPending = true;
+            }
             updateOrderDeatilsForPnL(order, "buy");
             generateOrderDetails(order, "buy-order-list", buyOrderCount);
             updateOrderPos(order);
@@ -1036,6 +1055,15 @@ function getOrders() {
             order.status != "CANCELED"
           ) {
             sellOrderCount++;
+            if (parseInt(order.token) === parseInt(autoToken) && order.status === "COMPLETE") {
+              autoBought = false;
+              autoBuyAttempt = 0;
+              autoSellAttempt = 0;
+            }
+
+            if (parseInt(order.token) === parseInt(autoToken) && order.status === "OPEN") {
+              autoSellPending = true;
+            }
             updateOrderDeatilsForPnL(order, "sell");
             generateOrderDetails(order, "sell-order-list", sellOrderCount);
             updateOrderPos(order);
@@ -1141,6 +1169,10 @@ function generateOrderDetails(order, id, count) {
       button.disabled = disabled;
       if (disabled) button.classList.add("disabled-button");
     });
+  }
+
+  if (count === 1) {
+    list.innerHTML = id === "buy-order-list" ? "" : id === "sell-order-list" ? "<h5>" : "";
   }
 
   list.appendChild(singleOrder);
