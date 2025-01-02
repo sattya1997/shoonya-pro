@@ -16,8 +16,7 @@
   <link rel="stylesheet" type="text/css" href="./style/chartPage.css">
   <link rel="stylesheet" type="text/css" href="./style/multiTab.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  
-  <script src="./js/pnL.js"></script>
+  <script src="./js/autoPopup.js"></script>
 </head>
 <body>
   <div class="popup-overlay" id="popupOverlay">
@@ -109,7 +108,7 @@
           <div id="depth-toolbar">
             <span><label for="enable-checkbox">Depth</label><input type="checkbox" id="enable-checkbox"></span>
             <span><label for="enable-checkbox">Show</label><input type="checkbox" id="enable-show-hide"></span>
-            <span><button id="show-orders-button" onclick="showPnL()">PnL</button></span>
+            <span><button id="show-orders-button" onclick="showAutoPopup()">Auto</button></span>
             <span><button id="clear-button">Clear</button></span>
             <span><button id="save-button" onclick="saveFile()">Download</button></span>
             <span>

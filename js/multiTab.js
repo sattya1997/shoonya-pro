@@ -95,12 +95,17 @@ loadAndCreate();
 
 async function loadAndCreate() {
   const selectedValue = marketSelect.value;
-  const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(`https://appfeeds.moneycontrol.com/jsonapi/market/marketmap&format=&type=0&ind_id=${selectedValue}`);
+  //const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(`https://appfeeds.moneycontrol.com/jsonapi/market/marketmap&format=&type=0&ind_id=${selectedValue}`);
+  const url = `https://stock-server-qag4.onrender.com/mc?id=${selectedValue}`;
   try {
+    const table = document.getElementById('analyze-table-list');
+    table.innerHTML = '<div id="loading-message" style="color: white;">Loading...</div>';
     var data = await axios.get(url);
-    data = JSON.parse(data.data.contents);
-    dataArray = data.item;
+    //data = JSON.parse(data.data.contents);
+    //dataArray = data.item;
+    dataArray = data.data;
     sortDataArray();
+    table.innerHTML = '';
     createList();
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -207,7 +212,7 @@ async function updateWatchListPnL() {
     const token = element.dataset.watchToken;
     const buyPrc = parseFloat(element.dataset.watchPrc);
     const qty = parseFloat(element.dataset.watchQty)
-    const data = await getDetails(token);
+    const data = await getDetailsForWatchList(token);
     if (data) {
       const pnL = ((data.lp - buyPrc)* qty).toFixed(2);
       element.innerHTML = pnL;
@@ -220,7 +225,7 @@ async function updateWatchListPnL() {
   }
 }
 
-async function getDetails(token) {
+async function getDetailsForWatchList(token) {
   const jData = {
     uid: uid,
     token: token.toString(),

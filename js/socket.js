@@ -168,7 +168,7 @@ function connectWebSocket() {
         }
         break;
       case "tf":
-        // Touchline feed update]
+        // Touchline feed update
         if (message.tk === "26000") {
           createNiftyDataField(message);
         } else {
@@ -182,7 +182,11 @@ function connectWebSocket() {
 
         if (message.lp) {
           updateGraph(message);
-          updateCandleStick(message)
+          updateCandleStick(message);
+
+          //this code if for buy sell automation
+          //comment it if not want
+          autoProcess(message);
         }
         break;
       case "dk":
@@ -205,6 +209,116 @@ function connectWebSocket() {
   websocket.onerror = function (error) {
     console.error("WebSocket error observed:", error);
   };
+}
+
+function autoProcess(message) {
+  let key = parseInt(autoToken);
+  if (message.tk === key.toString()) {
+    if(stockAnalyzeData[key].SDSMA) {
+      const orderDetails = determineOrder(stockAnalyzeData, key, message.lp);
+      const myTime = new Date(message.ft *1000);
+      console.log(orderDetails.orderType + ', '+orderDetails.triggerPrice+', '+myTime.toLocaleTimeString());
+      const now = new Date();
+      const buyTimeLimit = new Date(now); 
+      buyTimeLimit.setHours(15, 5, 0, 0);
+      
+      if (orderDetails.orderType === 'strong buy' && !autoBought && !autoBuyPending && now < buyTimeLimit) {
+        console.log('LTMB: '+stockAnalyzeData[key].LTMB)
+        console.log('LP: '+message.lp)
+        if (parseFloat(stockAnalyzeData[key].LTMB).toFixed(1) > parseFloat(message.lp).toFixed(1)) {
+          console.log('place buy order at '+ orderDetails.triggerPrice);
+          placeAutoOrder('B', orderDetails.triggerPrice);
+        }
+      }
+      if (orderDetails.orderType === 'strong buy' && !autoBought && autoBuyPending) {
+        autoBuyAttempt++;
+        if (autoBuyAttempt > 4) {
+          console.log('auto fry buy');
+          autoFry(message, 'positive');
+          return;
+        }
+        console.log('modify buy order at '+ orderDetails.triggerPrice);
+        modifyAutoOrder(orderDetails.triggerPrice);
+      }
+
+      if (orderDetails.orderType === 'strong sell' && autoBought && !autoSellPending) {
+        console.log('place sell order at '+ orderDetails.triggerPrice);
+        placeAutoOrder('S', orderDetails.triggerPrice);
+      }
+      if (orderDetails.orderType === 'strong sell' && autoBought && autoSellPending) {
+        autoSellAttempt++;
+        if (autoSellAttempt > 4) {
+          console.log('auto fry sell');
+          autoFry(message, 'negative');
+          return;
+        }
+        console.log('modify sell order at '+ orderDetails.triggerPrice);
+        modifyAutoOrder(orderDetails.triggerPrice);
+      }
+      buyTimeLimit.setHours(15, 25, 0, 0);
+      if (now > buyTimeLimit && autoBought) {
+        if (autoSellPending) {
+          console.log('auto fry sell');
+          autoFry(message, 'negative');
+        } else {
+          console.log('place sell order'+message.lp);
+          placeAutoOrder('S', message.lp);
+        }
+      }
+    }
+  }
+}
+
+function autoFry(message, type) {
+  let key = parseInt(autoToken);
+  const norenOrderNo = getNorenOrderNo(key);
+  console.log(norenOrderNo);
+  jDataF = {
+    norenordno: norenOrderNo.toString(),
+    uid: uid,
+  };
+  jDataF["prctyp"] = "LMT";
+  jDataF["tsym"] = autoSymbol.toString();
+  jDataF["qty"] = autoQty.toString();
+  jDataF["exch"] = "NSE";
+  jDataF["ret"] = "DAY";
+  if (type === 'positive') {
+    jDataF["prc"] = (parseFloat(message.lp) + parseFloat(message.lp)/50).toFixed(2).toString();
+  } else if (type === 'negative') {
+    jDataF["prc"] = (parseFloat(message.lp) - parseFloat(message.lp)/50).toFixed(2).toString();
+  }
+
+  norenordnoF = norenOrderNo.toString();
+  response = modifiedOrderPlace(norenordnoF, "modifyorder", jDataF);
+  if (response) {
+    response.then((res) => {
+      showOrderMessage(res);
+    });
+  }
+  autoBuyAttempt = 0;
+}
+
+function modifyAutoOrder(price) {
+  let key = parseInt(autoToken);
+  const norenOrderNo = getNorenOrderNo(key);
+  console.log(norenOrderNo);
+  jDataF = {
+    norenordno: norenOrderNo.toString(),
+    uid: uid,
+  };
+  jDataF["prctyp"] = "LMT";
+  jDataF["tsym"] = autoSymbol.toString();
+  jDataF["qty"] = autoQty.toString();
+  jDataF["exch"] = "NSE";
+  jDataF["ret"] = "DAY";
+  jDataF["prc"] = price;
+  norenordnoF = norenOrderNo.toString();
+  response = modifiedOrderPlace(norenordnoF, "modifyorder", jDataF);
+  if (response) {
+    response.then((res) => {
+      showOrderMessage(res);
+    });
+  }
 }
 
 async function updateHoldingData(data) {
@@ -543,7 +657,7 @@ function createNiftyDataField(data) {
       sym = data.pc > 0 ? "+" : "";
     }
 
-    niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) Time: ${time}`;
+    niftyTag.innerHTML = `Nifty: ${data.lp} (${sym}${data.pc}%) ${time}`;
     niftyTag.style.backgroundColor = parseFloat(data.pc) >= 0 ? "#82dbcadb" : "#e99090e6";
   }
 }
@@ -1319,4 +1433,214 @@ function refreshSocketCandle() {
   socketCandle = [];
   isUpdated = false;
   oldV = 0;
+}
+
+function determineOrder(data, key, currentPrice) {
+  const sdsmaData = data[key].SDSMA;
+  const STUB = data[key].STUB;
+  const LTUB = data[key].LTUB;
+  const STLB = data[key].STLB;
+  const LTLB = data[key].LTLB;
+
+  // Check if the last 3 or more SDSMA values are decreasing
+  let decreasing = true;
+  for (let i = sdsmaData.length - 3; i < sdsmaData.length; i++) {
+    if (sdsmaData[i].sma >= sdsmaData[i - 1].sma) {
+      decreasing = false;
+      break;
+    }
+  }
+
+  // Check if the last 3 or more SDSMA values are increasing
+  let increasing = true;
+  for (let i = sdsmaData.length - 3; i < sdsmaData.length; i++) {
+    if (sdsmaData[i].sma <= sdsmaData[i - 1].sma) {
+      increasing = false;
+      break;
+    }
+  }
+
+  const lastSMA = sdsmaData[sdsmaData.length - 1].sma;
+  const secondLastSMA = sdsmaData[sdsmaData.length - 2].sma;
+  const thirdLastSMA = sdsmaData[sdsmaData.length - 3].sma;
+  const lastSD = sdsmaData[sdsmaData.length - 1].sd;
+
+  // Determine the order type and trigger price
+  let orderType, triggerPrice;
+  if (decreasing && currentPrice < lastSMA) {
+    if ((lastSMA - currentPrice) > lastSD) {
+      orderType = 'strong buy';
+    } else {
+      orderType = 'buy';
+    }
+    determinePrice("B");
+  } else if (increasing && currentPrice > lastSMA) {
+    if ((currentPrice - lastSMA) > lastSD) {
+      orderType = 'strong sell';
+    } else {
+      orderType = 'sell';
+    }
+    determinePrice("S");
+  } else {
+    orderType = 'hold';
+    triggerPrice = '0';
+  }
+
+  var difference = ((currentPrice - lastSMA) * 100) / lastSMA;
+  if (difference > .25) {
+    orderType = 'strong sell';
+    determinePrice("S");
+    console.log("return from .25");
+    return {
+      orderType: orderType,
+      triggerPrice: triggerPrice,
+    };
+  } else if (difference < -.25) {
+    orderType = 'strong buy';
+    determinePrice("B");
+    console.log("return from .25");
+    return {
+      orderType: orderType,
+      triggerPrice: triggerPrice,
+    };
+  }
+
+  difference = ((currentPrice - secondLastSMA) * 100) / secondLastSMA;
+  if (difference < -.35) {
+    orderType = "strong buy";
+    determinePrice("B");
+    console.log("return from .35");
+    return {
+      orderType: orderType,
+      triggerPrice: triggerPrice,
+    };
+  } else if (difference > .35) {
+    orderType = "strong sell";
+    determinePrice("S");
+    console.log("return from .35");
+    return {
+      orderType: orderType,
+      triggerPrice: triggerPrice,
+    };
+  }
+
+  difference = ((currentPrice - thirdLastSMA) * 100) / thirdLastSMA;
+  if (difference < -.45) {
+    orderType = "strong buy";
+    determinePrice("B");
+    console.log("return from .45");
+    return {
+      orderType: orderType,
+      triggerPrice: triggerPrice,
+    };
+  } else if (difference > .45) {
+    orderType = "strong sell";
+    determinePrice("S");
+    console.log("return from .45");
+    return {
+      orderType: orderType,
+      triggerPrice: triggerPrice,
+    };
+  }
+
+  return {
+    orderType: orderType,
+    triggerPrice: triggerPrice,
+  };
+
+  function determinePrice(type) {
+    if (type === "S") {
+      triggerPrice = parseFloat(STLB + lastSD).toFixed(2);
+      if (triggerPrice < currentPrice) {
+        triggerPrice = currentPrice;
+      }
+    }
+
+    if (type === "B") {
+      triggerPrice = parseFloat(STLB - lastSD).toFixed(2);
+      if (triggerPrice > currentPrice) {
+        triggerPrice = currentPrice;
+      }
+    }
+  }
+}
+
+function placeAutoOrder(orderType, limitPrice) {
+  const element = document.getElementById(`order-${autoToken}`);
+  if(element) {
+    const name = element.dataset.name;
+    autoSymbol = name + '-EQ';
+  }
+  const jData = {
+    uid: uid,
+    actid: uid,
+    trantype: orderType.toString(),
+    exch: "NSE",
+    tsym: autoSymbol.toString(),
+    qty: autoQty.toString(),
+    dscqty: "0",
+    prctyp: "LMT",
+    prd: "C",
+    prc: limitPrice.toString(),
+    ret: "DAY",
+    token: autoToken.toString(),
+  };
+  const jKey = userToken;
+
+  postRequest("placeorder", jData, jKey)
+    .then((res) => {
+      const msgElement = document.getElementById("msg");
+      if (res.data && res.data.stat && res.data.stat === "Ok") {
+        msgElement.innerHTML = "Success";
+        msgElement.style.opacity = "1";
+        setTimeout(() => {
+          msgElement.style.opacity = "1";
+        }, 1500);
+        setTimeout(() => {
+          msgElement.style.opacity = "0";
+        }, 1500);
+
+        getBalance();
+        getOrders();
+      } else {
+        msgElement.innerHTML = "Could not modify...";
+        msgElement.style.backgroundColor = "#e88888";
+        msgElement.style.opacity = "1";
+        setTimeout(() => {
+          msgElement.style.opacity = "1";
+        }, 1500);
+        setTimeout(() => {
+          msgElement.style.opacity = "0";
+        }, 1500);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
+function getNorenOrderNo(posId) {
+  const spanElements = document.querySelectorAll(`span[data-pos-id="${posId}"]`);
+  var spanElement; 
+  if (spanElements.length > 0) {
+    spanElements.forEach(element => {
+      if (element.dataset.posStatus === "OPEN") {
+        spanElement = element;
+      }
+    });
+  }
+  
+  if (spanElement) {
+    const orderListElement = spanElement.closest('.single-order-list');
+    
+    if (orderListElement) {
+      const divElement = orderListElement.querySelector('div[norenordno]');
+      
+      if (divElement) {
+        const norenOrderNo = divElement.getAttribute('norenordno');
+        return norenOrderNo;
+      }
+    }
+  }
+  return null;
 }
